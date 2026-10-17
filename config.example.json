@@ -1,0 +1,29 @@
+{
+  "site_title": "Lab Monitor",
+  "host_name": "lab-server-01",
+  "port": 8000,
+
+  "user_map": {
+    "alice": "Alice Kim",
+    "bob": "Bob Lee",
+    "root": "Server"
+  },
+
+  "remote_hosts": [
+    { "id": "node2", "name": "Node 2 (GPU box)", "base_url": "http://10.0.0.5:8000" }
+  ],
+
+  "disk": {
+    "breakdown_roots": ["/data", "/home"],
+    "drill_roots": ["/data"]
+  },
+
+  "intervals": {
+    "gpu": 3,
+    "memory_pss": 20,
+    "subdir": 1800,
+    "remote_poll": 5,
+    "remote_stale_after": 20,
+    "remote_fetch_timeout": 4
+  }
+}

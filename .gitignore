@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.bak
+*.tmp
+.venv/
+venv/
+
+# Per-host configuration — each operator copies config.example.json → config.json
+# and fills in their own user_map / remote_hosts / disk roots. Never commit it.
+config.json
+
+# Runtime data the app writes
+data/gpu_notes.json
+data/*.json
+!data/.gitkeep

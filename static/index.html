@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>Lab Monitor</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&family=DM+Mono:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="p-8 lg:p-20">
+    <nav class="max-w-7xl mx-auto mb-10">
+        <!-- top row: title + global controls (palette / theme / clock) -->
+        <div class="flex flex-wrap justify-between items-center gap-x-4 gap-y-4">
+            <p id="app-title" style="font-family:'Montserrat',sans-serif;font-size:52px;font-weight:500;letter-spacing:0.09em;line-height:1.05">Lab Monitor</p>
+            <div class="flex items-center gap-3 px-4 py-2 rounded-2xl backdrop-blur-md" style="background: var(--pid-bg); border: 1px solid var(--border)">
+                <div class="flex items-center gap-1.5">
+                    <div class="color-dot-wrapper"><div class="color-dot bg-[#5b6af0]" data-accent="#5b6af0" onclick="setAccent('#5b6af0')"></div></div>
+                    <div class="color-dot-wrapper"><div class="color-dot bg-[#10b981]" data-accent="#10b981" onclick="setAccent('#10b981')"></div></div>
+                    <div class="color-dot-wrapper"><div class="color-dot bg-[#f43f5e]" data-accent="#f43f5e" onclick="setAccent('#f43f5e')"></div></div>
+                    <div class="color-dot-wrapper"><div class="color-dot bg-[#f59e0b]" data-accent="#f59e0b" onclick="setAccent('#f59e0b')"></div></div>
+                    <div class="color-dot-wrapper"><div class="color-dot bg-[#8b5cf6]" data-accent="#8b5cf6" onclick="setAccent('#8b5cf6')"></div></div>
+                    <div class="color-dot-wrapper"><div class="color-dot bg-[#06b6d4]" data-accent="#06b6d4" onclick="setAccent('#06b6d4')"></div></div>
+                    <div class="color-dot-wrapper"><input type="color" id="accent-picker" class="color-dot color-picker" value="#5b6af0" oninput="setAccent(this.value)" title="Custom accent — pick your own"></div>
+                </div>
+                <span class="ctl-divider"></span>
+                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light / dark"></button>
+                <span class="ctl-divider"></span>
+                <div class="text-sm mono font-bold w-[96px] text-right tracking-tight select-none" style="color:var(--strong)" id="time">00:00:00 AM</div>
+            </div>
+        </div>
+        <!-- tabs + host selector share one row: tabs left, host chips right (no dedicated row) -->
+        <div class="flex flex-wrap justify-between items-center gap-x-6 gap-y-3 mt-8">
+            <div class="flex flex-wrap gap-x-6 gap-y-3">
+                <button onclick="switchTab('gpu')" id="btn-gpu" class="tab-btn active pb-2 font-bold uppercase text-base tracking-widest">GPU Resources</button>
+                <button onclick="switchTab('mem')" id="btn-mem" class="tab-btn pb-2 font-bold uppercase text-base tracking-widest">System Memory</button>
+                <button onclick="switchTab('disk')" id="btn-disk" class="tab-btn pb-2 font-bold uppercase text-base tracking-widest">Disk</button>
+                <button onclick="switchTab('docker')" id="btn-docker" class="tab-btn pb-2 font-bold uppercase text-base tracking-widest">Docker</button>
+            </div>
+            <!-- multi-host selector: chips come from the "remote_hosts" list in config.json -->
+            <div id="host-bar" class="pb-2" style="display:none;align-items:center;gap:8px;flex-wrap:wrap">
+                <span class="text-base font-bold uppercase tracking-widest" style="color:var(--text);opacity:0.85">Host</span>
+                <div id="host-chips" class="flex flex-wrap items-center gap-2"></div>
+            </div>
+        </div>
+    </nav>
+
+    <main id="content" class="max-w-7xl mx-auto"></main>
+
+    <script src="/static/js/gpu.js"></script>
+    <script src="/static/js/memory.js"></script>
+    <script src="/static/js/disk.js"></script>
+    <script src="/static/js/docker.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

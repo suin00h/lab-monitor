@@ -1,0 +1,32 @@
+# Lab Monitor systemd unit — TEMPLATE. Edit the three >>> lines for this host.
+#
+# Install on a new host:
+#   sudo cp lab-monitor.service /etc/systemd/system/
+#   sudoedit /etc/systemd/system/lab-monitor.service   # fix the >>> lines
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now lab-monitor
+#
+# Restart after Python/router/monitor changes (static files serve fresh;
+# config.json is read live and needs no restart):
+#   sudo systemctl restart lab-monitor
+
+[Unit]
+Description=Lab Monitor (FastAPI/uvicorn system dashboard)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+# >>> run as a user that can read /proc and (optionally) talk to Docker.
+User=root
+# >>> absolute path to this checkout on this host:
+WorkingDirectory=/opt/lab-monitor
+# >>> absolute path to the uvicorn inside your venv/conda env (run `which uvicorn`).
+#     --port must match "port" in config.json. 0.0.0.0 exposes it on the LAN;
+#     use 127.0.0.1 to keep it local-only behind a reverse proxy.
+ExecStart=/opt/lab-monitor/.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

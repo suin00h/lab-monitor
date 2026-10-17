@@ -1,0 +1,261 @@
+        /* Pretendard — self-hosted (same files the timetable uses), our origin so it always loads */
+        @font-face { font-family: 'Pretendard'; font-weight: 400; font-display: swap; src: url('/static/fonts/Pretendard-Regular.woff2') format('woff2'); }
+        @font-face { font-family: 'Pretendard'; font-weight: 500; font-display: swap; src: url('/static/fonts/Pretendard-Medium.woff2') format('woff2'); }
+        @font-face { font-family: 'Pretendard'; font-weight: 600; font-display: swap; src: url('/static/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
+        @font-face { font-family: 'Pretendard'; font-weight: 700; font-display: swap; src: url('/static/fonts/Pretendard-Bold.woff2') format('woff2'); }
+
+        :root {
+            --bg: #0f0f11; --card: #161618; --text: #ffffff; --accent: #5b6af0;
+            --border: rgba(255,255,255,0.06); --sub: rgba(255,255,255,0.55);
+            --label: rgba(255,255,255,0.6); --strong: #ffffff;
+            --divider: rgba(255,255,255,0.16);
+            --seg-overhead: rgba(255,255,255,0.52); --seg-cache: rgba(255,255,255,0.26); --seg-free: rgba(255,255,255,0.08);
+            --z1: rgba(255,255,255,0.10); --z2: rgba(255,255,255,0.20); --z3: rgba(255,255,255,0.34);
+            --bar-bg: rgba(255,255,255,0.05); --bar-border: rgba(255,255,255,0.05);
+            --proc-hover: rgba(255,255,255,0.05); --proc-detail-bg: rgba(0,0,0,0.05);
+            --pid-bg: rgba(255,255,255,0.1); --separator: rgba(255,255,255,0.05);
+            --modal-bg: #1a1a1f;
+            --os-overhead: rgba(59,130,246,0.5);
+            --available-overlay: rgba(16,185,129,0.18);
+            --mono-font: 'IBM Plex Mono','DM Mono',monospace;
+            --body-font: 'Manrope','Noto Sans KR',sans-serif;
+            --code-font: 'JetBrains Mono','DM Mono',monospace;
+            /* Docs prose — GitHub/Notion-style native system stack. Latin falls
+               through to the OS UI face; Korean skips those (no glyphs) and lands
+               on the OS Korean face (Apple SD Gothic Neo / Malgun Gothic / Noto). */
+            --docs-font: -apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
+            --color-crit: #f43f5e;
+            --color-warn: #f59e0b;
+            --available: #10b981;
+            --cache: #f59e0b;
+        }
+        .light {
+            /* accent is slightly deeper than dark's #5b6af0 so small accent text
+               (UTIL/Free/running/counts) clears contrast on a white card. */
+            --bg: #f0f2f5; --card: #ffffff; --text: #0f172a; --accent: #4f46e5;
+            --border: rgba(0,0,0,0.12); --sub: rgba(15,23,42,0.62);
+            --label: rgba(15,23,42,0.58); --strong: #0f172a;
+            --divider: rgba(15,23,42,0.22);
+            --seg-overhead: rgba(15,23,42,0.5); --seg-cache: rgba(15,23,42,0.26); --seg-free: rgba(15,23,42,0.07);
+            --z1: rgba(15,23,42,0.10); --z2: rgba(15,23,42,0.22); --z3: rgba(15,23,42,0.38);
+            --bar-bg: rgba(0,0,0,0.08); --bar-border: rgba(0,0,0,0.08);
+            --proc-hover: rgba(0,0,0,0.05); --proc-detail-bg: rgba(0,0,0,0.02);
+            --pid-bg: rgba(0,0,0,0.09); --separator: rgba(0,0,0,0.10);
+            --modal-bg: #ffffff;
+            --os-overhead: rgba(59,130,246,0.35);
+            --available-overlay: rgba(16,185,129,0.15);
+            --color-crit: #e11d48;
+            --color-warn: #d97706;
+            --available: #059669;
+            --cache: #d97706;
+        }
+        body { background-color: var(--bg); color: var(--text); font-family: var(--body-font, 'Pretendard','Noto Sans KR',sans-serif); transition: background 0.3s; scrollbar-gutter: stable; }
+        html { scrollbar-gutter: stable; }
+        .mono { font-family: var(--mono-font, 'DM Mono', monospace); }
+        .card { background-color: var(--card); border: 1px solid var(--border); transition: all 0.3s; }
+        .tab-btn { transition: all 0.2s; border-bottom: 2px solid transparent; cursor: pointer; opacity: 0.85; font-family: inherit; }
+        .tab-btn:hover { opacity: 1; }
+        .tab-btn.active { border-color: var(--accent); color: var(--accent); opacity: 1; }
+        .host-chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; white-space: nowrap; font-family: inherit; }
+        .host-chip:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+        /* active = outlined: colored border + colored label + faint inner tint (not a full fill) */
+        .host-chip-active { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
+        /* status is shown only for offline hosts — a quiet gray tag on a dimmed chip */
+        .host-chip-off { opacity: 0.45; cursor: not-allowed; }
+        .host-chip-off:hover { border-color: var(--border); }
+        /* theme segmented toggle */
+        .theme-toggle { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; border: none; background: transparent; color: var(--label); cursor: pointer; transition: color 0.15s; line-height: 0; padding: 0; }
+        .theme-toggle:hover { color: var(--accent); }
+        .ctl-divider { width: 1px; height: 18px; background: var(--divider); flex-shrink: 0; }
+        /* GPU-style hero split (Memory | CPU): head + foot on page bg, only the box is filled */
+        .msplit { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: stretch; margin-bottom: 28px; }
+        .mcol { display: flex; flex-direction: column; }
+        .mhead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 0 4px; margin-bottom: 16px; }
+        .mhead .t { font-weight: 900; font-size: 24px; letter-spacing: -0.025em; line-height: 2rem; }
+        .mhead .s { font-family: var(--mono-font, 'DM Mono', monospace); font-weight: 700; font-size: 15px; color: var(--text); }
+        .mbox { border: 1px solid var(--border); border-radius: 16px; background: var(--card); padding: 26px; flex: 1; display: flex; gap: 28px; align-items: center; }
+        .mring { width: 168px; height: 168px; border-radius: 50%; flex-shrink: 0; position: relative; }
+        .mring::after { content: ''; position: absolute; inset: 21px; background: var(--card); border-radius: 50%; }
+        .mring .c { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 3; }
+        /* inner concentric ring (Memory: emerald Available arc around the hero) —
+           z-index lifts it above the outer ring's hole (::after), else it's hidden */
+        .mring-inner { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 122px; height: 122px; border-radius: 50%; z-index: 2; }
+        .mring-inner::after { content: ''; position: absolute; inset: 7px; background: var(--card); border-radius: 50%; }
+        .mring .c .k { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .11em; }
+        .mring .c .n { font-family: var(--mono-font, 'DM Mono', monospace); font-size: 2.4rem; font-weight: 900; line-height: 1; }
+        .mbd { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; min-width: 0; }
+        .mbd .it { display: flex; align-items: center; gap: 11px; }
+        .mbd .sw { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+        .mbd .nm { font-size: 15px; font-weight: 600; color: var(--text); }
+        .mbd .v { margin-left: auto; font-family: var(--mono-font, 'DM Mono', monospace); font-weight: 800; font-size: 18px; color: var(--text); }
+        .mbd .v-reg { font-weight: 500; }
+        .ubar { height: 7px; border-radius: 999px; background: var(--bar-bg); border: 1px solid var(--bar-border); overflow: hidden; margin-top: 6px; }
+        .ubar > div { height: 100%; background: var(--accent); border-radius: 999px; }
+        /* CPU inner-ring threshold legend (no divider) */
+        .cpu-th { display: flex; flex-direction: column; gap: 8px; }
+        .cpu-th .th-it { display: flex; align-items: center; gap: 10px; }
+        /* circled "?" help badge with hover tooltip (CPU card) */
+        .help { display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); font-size: 12px; font-weight: 800; cursor: default; flex-shrink: 0; line-height: 1; font-family: 'Pretendard','Noto Sans KR',sans-serif; vertical-align: middle; }
+        /* shared body-level help tooltip (positioned by app.js) */
+        .help-tooltip { position: fixed; width: 300px; background: var(--modal-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; font-family: 'Pretendard','Noto Sans KR',sans-serif; font-size: 13px; font-weight: 400; line-height: 1.6; color: var(--text); box-shadow: 0 8px 26px rgba(0,0,0,0.45); opacity: 0; visibility: hidden; transform: translateY(-2px); transition: opacity .15s, transform .15s; overflow-y: auto; z-index: 300; }
+        .help-tooltip.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .help-tooltip .tip-h { display: block; font-weight: 800; font-size: 14px; margin-bottom: 5px; color: var(--text); }
+        .help-tooltip .tip-h2 { margin-top: 12px; }
+        .cpu-th .th-nm { font-size: 13px; font-weight: 600; color: var(--label); }
+        .cpu-th .th-v { margin-left: auto; font-family: var(--mono-font, 'DM Mono', monospace); font-size: 13px; font-weight: 700; color: var(--label); }
+        @media (max-width: 820px) { .msplit { grid-template-columns: 1fr; } }
+        @media (max-width: 480px) { .mbox { flex-direction: column; } }
+        /* GPU owner fold (collapsed by default; native details, touch+keyboard OK) */
+        /* GPU owner list — no longer an inline fold (it stole vertical space and
+           shifted the card below). Now a hover trigger in the header that opens the
+           shared body-level popover; rows below render inside that floating panel. */
+        /* Inherits the footer's font (matches the right-side "Free" label); a small
+           chevron — not an underline — signals it opens the owner popover. */
+        /* GPU per-process notes */
+        .vb-note-dot { position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 999px; background: var(--available); box-shadow: 0 0 0 2px var(--card); }
+        .gpu-note-pop { position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%) scale(0.97); width: 340px; max-width: calc(100vw - 32px); background: var(--modal-bg); border: 1px solid var(--border); border-radius: 12px; padding: 18px; box-shadow: 0 16px 50px rgba(0,0,0,0.45); z-index: 600; opacity: 0; visibility: hidden; transition: opacity .15s, transform .15s; }
+        .gpu-note-pop.show { opacity: 1; visibility: visible; transform: translate(-50%,-50%) scale(1); }
+        .gpu-note-pop .gnp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+        .gpu-note-pop .gnp-title { font-weight: 800; font-size: 15px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .gpu-note-pop .gnp-x { background: none; border: none; color: var(--label); cursor: pointer; display: inline-flex; padding: 3px; border-radius: 6px; flex-shrink: 0; transition: color .15s, background .15s; }
+        .gpu-note-pop .gnp-x:hover { color: var(--text); background: var(--bar-bg); }
+        .gpu-note-pop .gnp-feed { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+        .gpu-note-pop .gnp-empty { color: var(--label); font-size: 13px; padding: 6px 2px; }
+        .gpu-note-pop .gnp-c { display: flex; gap: 10px; align-items: flex-start; }
+        .gpu-note-pop .gnp-c-ico { flex-shrink: 0; display: inline-flex; margin-top: 1px; }
+        .gpu-note-pop .gnp-c-body { min-width: 0; flex: 1; }
+        .gpu-note-pop .gnp-c-text { font-size: 14px; color: var(--text); line-height: 1.45; word-break: break-word; }
+        .gpu-note-pop .gnp-c-meta { font-family: var(--mono-font, 'DM Mono', monospace); font-size: 11px; color: var(--label); margin-top: 2px; }
+        .gpu-note-pop .gnp-c-del { cursor: pointer; color: var(--color-crit); }
+        .gpu-note-pop .gnp-c-del:hover { text-decoration: underline; }
+        .gpu-note-pop .gnp-compose { display: flex; gap: 8px; }
+        .gpu-note-pop .gnp-input { flex: 1; min-width: 0; background: var(--bar-bg); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; color: var(--text); font-family: var(--body-font, sans-serif); font-size: 14px; outline: none; }
+        .gpu-note-pop .gnp-input:focus { border-color: var(--accent); }
+        .gpu-note-pop .gnp-compose .modal-btn { font-size: 13px; padding: 9px 16px; flex-shrink: 0; }
+        .note-tip { position: fixed; max-width: 260px; background: var(--modal-bg); border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; box-shadow: 0 8px 26px rgba(0,0,0,0.45); z-index: 300; opacity: 0; visibility: hidden; transition: opacity .12s; pointer-events: none; }
+        .note-tip.show { opacity: 1; visibility: visible; }
+        .note-tip .nt-head { font-family: var(--mono-font, 'DM Mono', monospace); font-size: 12px; font-weight: 700; color: var(--label); }
+        .note-tip .nt-list { margin-top: 7px; display: flex; flex-direction: column; gap: 6px; }
+        .note-tip .nt-row { display: flex; align-items: flex-start; gap: 7px; }
+        .note-tip .nt-ico { flex-shrink: 0; display: inline-flex; margin-top: 1px; }
+        .note-tip .nt-t { font-size: 13px; color: var(--text); line-height: 1.4; word-break: break-word; }
+        /* Thin vitals strip above the GPU cards: memory use + CPU pressure. */
+        .gpu-vitals { display: flex; align-items: center; gap: 18px; padding: 0 2px; margin-bottom: 22px; }
+        .gpu-vitals .gv { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+        .gpu-vitals .gv-l { font-family: var(--mono-font, 'DM Mono', monospace); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--label); flex-shrink: 0; }
+        .gpu-vitals .gv-track { flex: 1; height: 4px; min-width: 40px; background: var(--bar-bg); border-radius: 999px; overflow: hidden; }
+        .gpu-vitals .gv-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width .5s ease; }
+        .gpu-vitals .gv-v { font-family: var(--mono-font, 'DM Mono', monospace); font-size: 12px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; flex-shrink: 0; min-width: 4ch; text-align: right; }
+        .gpu-vitals .gv-sep { width: 1px; height: 16px; background: var(--divider); flex-shrink: 0; }
+        .gpu-owners { display: inline-flex; align-items: center; gap: 4px; cursor: default; white-space: nowrap; transition: color .15s; }
+        .gpu-owners:hover { color: var(--text); }
+        .gpu-owners .ochev { opacity: .55; transition: opacity .15s; }
+        .gpu-owners:hover .ochev { opacity: 1; }
+        .own-row { display: flex; align-items: center; gap: 12px; padding: 7px 2px; border-top: 1px solid var(--separator); }
+        .own-row:first-of-type { border-top: none; padding-top: 2px; }
+        .own-row .od { width: 9px; height: 9px; border-radius: 3px; background: var(--accent); flex-shrink: 0; }
+        .own-row .nm { font-weight: 600; font-size: 14px; }
+        .own-row .nm { min-width: 0; margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .own-row .ob { width: 72px; height: 5px; border-radius: 999px; background: var(--bar-bg); overflow: hidden; flex-shrink: 0; }
+        .own-row .ob > div { height: 100%; background: var(--accent); border-radius: 999px; }
+        .own-row .v { font-family: var(--mono-font, 'DM Mono', monospace); font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; flex-shrink: 0; min-width: 9ch; text-align: right; }
+        .gpu-bar-container { position: relative; height: 96px; display: flex; align-items: center; gap: 2px; padding: 0 8px; background-color: var(--card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 16px; overflow: hidden; box-sizing: border-box; }
+        .vram-block { box-sizing: border-box; position: relative; min-width: 4px; flex-shrink: 0; border: 1.5px solid var(--ub, var(--accent)); background: color-mix(in srgb, var(--ub, var(--accent)) 15%, transparent); border-radius: 6px; height: calc(100% - 16px); cursor: pointer; transition: transform 0.2s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.2s, background-color 0.2s; z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }
+        .vram-block:hover { transform: scaleY(1.12) scaleX(1.02); z-index: 100; background: color-mix(in srgb, var(--ub, var(--accent)) 35%, transparent); box-shadow: 0 12px 30px rgba(0,0,0,0.7), 0 0 20px var(--ub, var(--accent)); }
+        /* single shared tooltip lives on <body> so it is never clipped by the container */
+        .vram-tooltip {
+            position: fixed; left: 0; top: 0;
+            background: var(--card); border: 1px solid var(--accent); border-radius: 8px;
+            padding: 6px 12px; white-space: nowrap;
+            font-family: 'Noto Sans KR','Pretendard',sans-serif; font-size: 12px; font-weight: 700;
+            color: var(--text); pointer-events: none; opacity: 0; transition: opacity 0.15s ease;
+            z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 12px color-mix(in srgb, var(--accent) 30%, transparent);
+            transform: translate(-50%, calc(-100% - 12px));
+        }
+        .vram-tooltip.show { opacity: 1; }
+        .device-separator { height: 1px; width: 100%; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.35; margin: 40px 0; }
+        .details-enter { max-height: 0; overflow: hidden; transition: max-height 0.25s ease-out; }
+        .expanded .details-enter { max-height: 480px; overflow-y: auto; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--label); }
+        * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+        .color-dot-wrapper { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; }
+        .color-dot { width: 14px; height: 14px; border-radius: 50%; cursor: pointer; transition: transform 0.15s ease-out; }
+        .color-dot:hover { transform: scale(1.25); }
+        /* custom-accent picker: a rainbow wheel so it reads as "pick any color"
+           (the native swatch is hidden so the gradient always shows) */
+        .color-picker { -webkit-appearance: none; -moz-appearance: none; appearance: none; padding: 0; border: none; box-shadow: 0 0 0 1.5px var(--border); background: conic-gradient(from 90deg, #f43f5e, #f59e0b, #facc15, #10b981, #06b6d4, #5b6af0, #8b5cf6, #f43f5e); }
+        .color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker::-webkit-color-swatch { border: none; border-radius: 50%; opacity: 0; }
+        .color-picker::-moz-color-swatch { border: none; border-radius: 50%; opacity: 0; }
+        /* active accent swatch indicator */
+        .color-dot.accent-active { outline: 2px solid var(--text); outline-offset: 2px; }
+        /* custom picker active: ring in the chosen color (== --accent), so you can
+           see which custom color is selected over the rainbow wheel */
+        .color-picker.accent-active { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .mem-bar-wrap { position: relative; width: 100%; overflow: visible; }
+        .mem-bar { width: 100%; height: 20px; background: var(--bar-bg); border-radius: 999px; overflow: hidden; border: 1px solid var(--bar-border); display: flex; gap: 2px; padding: 2px; }
+        .mem-bar-seg { height: 100%; border-radius: 999px; transition: width 0.5s ease; flex-shrink: 0; }
+        .available-highlight { border: 1px solid var(--available); }
+        .light .available-highlight p { font-weight: 900; }
+        .proc-hover:hover { background: var(--proc-hover); }
+        .disk-row { padding: 8px 10px; margin: 0 -10px 8px; border-radius: 10px; cursor: pointer; transition: background 0.15s; }
+        .disk-row:hover { background: var(--proc-hover); }
+        .disk-row-static { cursor: default; }
+        .disk-row-static:hover { background: transparent; }
+        .docker-row { padding-left: 8px; padding-right: 8px; margin-left: -8px; margin-right: -8px; border-radius: 10px; transition: background 0.15s; }
+        .docker-row:hover { background: var(--proc-hover); }
+        /* "Show N more" fold under the top-5 images */
+        .docker-more > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; border-top: 1px solid var(--separator); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--label); user-select: none; transition: color .15s; }
+        .docker-more > summary::-webkit-details-marker { display: none; }
+        .docker-more > summary:hover { color: var(--text); }
+        .docker-more .more-chev { transition: transform .15s; }
+        .docker-more[open] > summary .more-chev { transform: rotate(180deg); }
+        .docker-more:not([open]) .lbl-less { display: none; }
+        .docker-more[open] .lbl-more { display: none; }
+        .ch-del-btn { background: none; border: none; cursor: pointer; opacity: 0.3; color: var(--label); line-height: 0; padding: 3px; border-radius: 6px; transition: opacity .15s, color .15s, background .15s; }
+        .ch-del-btn svg { width: 16px; height: 16px; }
+        .ch-del-btn:hover { opacity: 1; color: var(--color-crit); background: color-mix(in srgb, var(--color-crit) 12%, transparent); }
+        .pid-badge { background: var(--pid-bg); }
+
+        /* Notes */
+        .channel-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; cursor: pointer; transition: all 0.2s; }
+        .channel-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .drag-card { cursor: grab; }
+        .drag-card:active { cursor: grabbing; }
+        .drag-card.dragging { opacity: 0.4; transform: scale(0.97); transition: none; box-shadow: none; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-box { background: var(--modal-bg); border: 1px solid var(--border); border-radius: 20px; padding: 36px; width: 480px; max-width: 90vw; }
+        .modal-input { width: 100%; background: var(--bar-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text); font-family: 'Pretendard','Noto Sans KR',sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; margin-top: 6px; box-sizing: border-box; }
+        .modal-input:focus { border-color: var(--accent); }
+        .modal-btn { padding: 10px 24px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; border: none; font-family: 'Pretendard','Noto Sans KR',sans-serif; }
+        .modal-btn-primary { background: var(--accent); color: #fff; }
+        .modal-btn-primary:hover { opacity: 0.85; }
+        .modal-btn-ghost { background: var(--bar-bg); color: var(--text); border: 1px solid var(--border); }
+        .modal-btn-ghost:hover { border-color: var(--accent); }
+        .file-viewer { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; margin-top: 24px; }
+        .file-list-item { display: flex; align-items: center; gap: 12px; padding: 14px 20px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--separator); }
+        .file-list-item:hover { background: var(--proc-hover); }
+        .file-list-item:last-child { border-bottom: none; }
+        .md-body { line-height: 1.8; font-family: var(--docs-font, inherit); }
+        .md-body h1 { font-size: 1.8rem; font-weight: 900; margin: 1.5rem 0 0.8rem; }
+        .md-body h2 { font-size: 1.4rem; font-weight: 800; margin: 1.4rem 0 0.6rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+        .md-body h3 { font-size: 1.15rem; font-weight: 700; margin: 1.2rem 0 0.4rem; }
+        .md-body p { margin: 0.7rem 0; }
+        .md-body ul, .md-body ol { padding-left: 1.5rem; margin: 0.6rem 0; }
+        .md-body li { margin: 0.3rem 0; }
+        .md-body code { font-family: var(--code-font, 'DM Mono', monospace); font-size: 0.85em; background: var(--bar-bg); padding: 2px 6px; border-radius: 4px; }
+        .md-body pre { background: var(--bar-bg); border-radius: 10px; padding: 16px; overflow-x: auto; margin: 1rem 0; }
+        .md-body pre code { background: none; padding: 0; }
+        .md-body blockquote { border-left: 3px solid var(--accent); padding-left: 16px; opacity: 0.7; margin: 1rem 0; }
+        .md-body a { color: var(--accent); text-decoration: underline; }
+        .md-body table { border-collapse: collapse; min-width: 100%; margin: 0; white-space: nowrap; }
+        .md-body .table-wrap { overflow-x: auto; margin: 1rem 0; border-radius: 8px; border: 1px solid var(--border); }
+        .md-body th, .md-body td { border: 1px solid var(--border); padding: 8px 12px; }
+        .md-body th { background: var(--bar-bg); font-weight: 700; }
+        .md-body img { max-width: 100%; border-radius: 8px; margin: 0.5rem 0; }
+        .md-body hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
