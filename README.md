@@ -15,7 +15,7 @@ machine shows, in a dark web UI:
 
 It is read-only: it reports on the machine, it does not control it.
 
-![tabs: GPU · System Memory · Disk · Docker, with a host switcher]()
+<!-- ![tabs: GPU · System Memory · Disk · Docker, with a host switcher]() -->
 <!-- drop a screenshot in docs/ and link it here -->
 
 ---
