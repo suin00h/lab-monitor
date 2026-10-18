@@ -216,7 +216,7 @@
                 noteTip.innerHTML = html;
                 noteTip.dataset.sig = sig;
             }
-            noteTip.style.left = Math.min(e.clientX + 14, window.innerWidth - 268) + 'px';
+            noteTip.style.left = Math.min(e.clientX + 14, window.innerWidth - 312) + 'px';
             noteTip.style.top = (e.clientY + 16) + 'px';
             noteTip.classList.add('show');
         });

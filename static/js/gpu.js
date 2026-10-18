@@ -121,7 +121,7 @@
             const maxU = owners[0].usage || 1;
             const rows = owners.map((o) => { const col = gpuUserTint(gpuUserRank(o.user)); return `<div class="own-row"><span class="od" style="background:${col}"></span><span class="nm">${o.user}</span><span class="ob"><div style="width:${(o.usage / maxU * 100).toFixed(1)}%;background:${col}"></div></span><span class="v">${gpuMem(o.usage, false)}</span></div>`; }).join('');
             const payload = (`<div class="tip-h">Owners</div>${rows}`).replace(/"/g, '&quot;');
-            const label = owners.length === 1 ? '1 owner' : `${owners.length} owners`;
+            const label = owners.length === 1 ? '1 Owner' : `${owners.length} Owners`;
             const chev = '<svg class="ochev" viewBox="0 0 20 20" width="12" height="12" fill="currentColor"><path d="M5.3 7.3a1 1 0 011.4 0L10 10.6l3.3-3.3a1 1 0 011.4 1.4l-4 4a1 1 0 01-1.4 0l-4-4a1 1 0 010-1.4z"/></svg>';
             return `<span class="gpu-owners" data-help="gpu-owners-${gpu.id}" data-help-html="${payload}">${label}${chev}</span>`;
         }
