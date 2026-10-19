@@ -12,8 +12,8 @@
 
         :root {
             --bg: #0f0f11; --card: #161618; --text: #ffffff; --accent: #5b6af0;
-            --border: rgba(255,255,255,0.06); --sub: rgba(255,255,255,0.55);
-            --label: rgba(255,255,255,0.6); --strong: #ffffff;
+            --border: rgba(255,255,255,0.06); --sub: rgba(255,255,255,0.68);
+            --label: rgba(255,255,255,0.82); --strong: #ffffff;
             --divider: rgba(255,255,255,0.16);
             --seg-overhead: rgba(255,255,255,0.52); --seg-cache: rgba(255,255,255,0.26); --seg-free: rgba(255,255,255,0.08);
             --z1: rgba(255,255,255,0.10); --z2: rgba(255,255,255,0.20); --z3: rgba(255,255,255,0.34);
@@ -39,8 +39,8 @@
             /* accent is slightly deeper than dark's #5b6af0 so small accent text
                (UTIL/Free/running/counts) clears contrast on a white card. */
             --bg: #f0f2f5; --card: #ffffff; --text: #0f172a; --accent: #4f46e5;
-            --border: rgba(0,0,0,0.12); --sub: rgba(15,23,42,0.62);
-            --label: rgba(15,23,42,0.58); --strong: #0f172a;
+            --border: rgba(0,0,0,0.12); --sub: rgba(15,23,42,0.72);
+            --label: rgba(15,23,42,0.75); --strong: #0f172a;
             --divider: rgba(15,23,42,0.22);
             --seg-overhead: rgba(15,23,42,0.5); --seg-cache: rgba(15,23,42,0.26); --seg-free: rgba(15,23,42,0.07);
             --z1: rgba(15,23,42,0.10); --z2: rgba(15,23,42,0.22); --z3: rgba(15,23,42,0.38);
@@ -104,6 +104,7 @@
         .help { display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); font-size: 12px; font-weight: 800; cursor: default; flex-shrink: 0; line-height: 1; font-family: 'Pretendard','Noto Sans KR',sans-serif; vertical-align: middle; }
         /* shared body-level help tooltip (positioned by app.js) */
         .help-tooltip { position: fixed; width: 300px; background: var(--modal-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; font-family: 'Pretendard','Noto Sans KR',sans-serif; font-size: 13px; font-weight: 400; line-height: 1.6; color: var(--text); box-shadow: 0 8px 26px rgba(0,0,0,0.45); opacity: 0; visibility: hidden; transform: translateY(-2px); transition: opacity .15s, transform .15s; overflow-y: auto; z-index: 300; }
+        .help-tooltip.pinned { border-color: var(--accent); }  /* click-pinned open */
         .help-tooltip.show { opacity: 1; visibility: visible; transform: translateY(0); }
         .help-tooltip .tip-h { display: block; font-weight: 800; font-size: 14px; margin-bottom: 5px; color: var(--text); }
         .help-tooltip .tip-h2 { margin-top: 12px; }
@@ -118,7 +119,9 @@
         /* Inherits the footer's font (matches the right-side "Free" label); a small
            chevron — not an underline — signals it opens the owner popover. */
         /* GPU per-process notes */
-        .vb-note-dot { position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 999px; background: var(--available); box-shadow: 0 0 0 2px var(--card); }
+        /* "has a comment" marker — neutral, NOT emerald (emerald is reserved for free headroom) */
+        /* "has a comment" marker — accent-coloured */
+        .vb-note-dot { position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 999px; background: var(--accent); box-shadow: 0 0 0 2px var(--card); }
         .gpu-note-pop { position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%) scale(0.97); width: 340px; max-width: calc(100vw - 32px); background: var(--modal-bg); border: 1px solid var(--border); border-radius: 12px; padding: 18px; box-shadow: 0 16px 50px rgba(0,0,0,0.45); z-index: 600; opacity: 0; visibility: hidden; transition: opacity .15s, transform .15s; }
         .gpu-note-pop.show { opacity: 1; visibility: visible; transform: translate(-50%,-50%) scale(1); }
         .gpu-note-pop .gnp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
@@ -148,10 +151,10 @@
         /* Thin vitals strip above the GPU cards: memory use + CPU pressure. */
         .gpu-vitals { display: flex; align-items: center; gap: 18px; padding: 0 2px; margin-bottom: 22px; }
         .gpu-vitals .gv { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-        .gpu-vitals .gv-l { font-family: var(--mono-font, 'DM Mono'), 'Pretendard', 'Noto Sans KR', monospace; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--label); flex-shrink: 0; }
-        .gpu-vitals .gv-track { flex: 1; height: 4px; min-width: 40px; background: var(--bar-bg); border-radius: 999px; overflow: hidden; }
+        .gpu-vitals .gv-l { font-family: var(--mono-font, 'DM Mono'), 'Pretendard', 'Noto Sans KR', monospace; font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--label); flex-shrink: 0; }
+        .gpu-vitals .gv-track { flex: 1; height: 6px; min-width: 40px; background: var(--bar-bg); border-radius: 999px; overflow: hidden; }
         .gpu-vitals .gv-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width .5s ease; }
-        .gpu-vitals .gv-v { font-family: var(--mono-font, 'DM Mono'), 'Pretendard', 'Noto Sans KR', monospace; font-size: 12px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; flex-shrink: 0; min-width: 4ch; text-align: right; }
+        .gpu-vitals .gv-v { font-family: var(--mono-font, 'DM Mono'), 'Pretendard', 'Noto Sans KR', monospace; font-size: 14px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; flex-shrink: 0; min-width: 4ch; text-align: right; }
         .gpu-vitals .gv-sep { width: 1px; height: 16px; background: var(--divider); flex-shrink: 0; }
         .gpu-owners { display: inline-flex; align-items: center; gap: 4px; cursor: default; white-space: nowrap; transition: color .15s; text-transform: none; letter-spacing: normal; font-family: 'Pretendard', 'Noto Sans KR', 'Segoe UI', system-ui, sans-serif; }
         .gpu-owners:hover { color: var(--text); }
@@ -170,17 +173,29 @@
         /* hover: only brighten the fill — no scale (distorts the card) and no glow
            (clipped by the card, looked like a layer beneath it) */
         .vram-block:hover { background: color-mix(in srgb, var(--ub, var(--accent)) 35%, transparent); }
-        /* single shared tooltip lives on <body> so it is never clipped by the container */
-        .vram-tooltip {
-            position: fixed; left: 0; top: 0;
-            background: var(--card); border: 1px solid var(--accent); border-radius: 8px;
-            padding: 6px 12px; white-space: nowrap;
-            font-family: 'Noto Sans KR','Pretendard',sans-serif; font-size: 12px; font-weight: 700;
-            color: var(--text); pointer-events: none; opacity: 0; transition: opacity 0.15s ease;
-            z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 12px color-mix(in srgb, var(--accent) 30%, transparent);
-            transform: translate(-50%, calc(-100% - 12px));
-        }
-        .vram-tooltip.show { opacity: 1; }
+        /* GPU card hero — Free VRAM is the loudest figure; its colour (set inline:
+           emerald / amber / critical) answers "can I run right now?" */
+        /* header right: util% + slim bar + temp — plain and legible, not tracked-out caps */
+        /* same font, size AND weight as the owners trigger (Pretendard, inherited) so they match */
+        .gpu-ut { display: inline-flex; align-items: center; gap: 40px; font-family: 'Pretendard', 'Noto Sans KR', 'Segoe UI', system-ui, sans-serif; color: var(--text); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+        /* Util and Temp are each their own group (label · value · bar) with a uniform
+           inner gap, so the value->bar spacing matches between the two groups. */
+        .gpu-ut .gpu-ut-g { display: inline-flex; align-items: center; gap: 8px; }
+        .gpu-ut .gpu-ut-l { color: var(--text); }
+        /* fixed-width, right-aligned value: labels don't shift as the number width
+           changes, and the value hugs its bar with the same gap in both groups */
+        .gpu-ut .gpu-ut-v { display: inline-block; min-width: 4ch; text-align: right; }
+        .gpu-ut .gpu-ut-bar { width: 92px; height: 9px; background: var(--bar-bg); border: 1px solid var(--bar-border); border-radius: 999px; overflow: hidden; }
+        .gpu-ut .gpu-ut-bar > div { height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.5s ease; }
+        /* free amount printed in the bar's empty space — same quiet voice as an idle GPU */
+        /* free amount in the empty space — same font as the readouts (Pretendard), one size, centered */
+        /* no font-size: inherit the readout size (matches Util/Temp/owner), just bigger */
+        .gpu-free-wm { height: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 4px; overflow: hidden; font-family: 'Pretendard', 'Noto Sans KR', 'Segoe UI', system-ui, sans-serif; color: var(--text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .gpu-free-wm .w { color: var(--text); }
+        /* GPU card footer — owners (left) + used/total (right) */
+        .gpu-foot { display: flex; justify-content: space-between; align-items: center; padding: 0 4px; }
+        /* same font, size and weight as the owners trigger (Pretendard, inherited) */
+        .gpu-foot-num { font-family: 'Pretendard', 'Noto Sans KR', 'Segoe UI', system-ui, sans-serif; color: var(--text); font-variant-numeric: tabular-nums; }
         .device-separator { height: 1px; width: 100%; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.35; margin: 40px 0; }
         .details-enter { max-height: 0; overflow: hidden; transition: max-height 0.25s ease-out; }
         .expanded .details-enter { max-height: 480px; overflow-y: auto; }

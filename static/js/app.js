@@ -234,7 +234,10 @@
         helpTip.className = 'help-tooltip';
         document.body.appendChild(helpTip);
         let _helpHideT = null;
+        let _helpPinned = false;   // click a help "?" / Owners trigger to pin the panel open
+        const _unpinHelp = () => { _helpPinned = false; helpTip.classList.remove('pinned', 'show'); helpTip.dataset.key = ''; };
         document.addEventListener('mousemove', e => {
+            if(_helpPinned) return;  // frozen while pinned — click-out or re-click to release
             const badge = e.target.closest('.help, .gpu-owners');
             const overTip = helpTip.contains(e.target);
             if(badge || overTip) {
@@ -253,12 +256,13 @@
                     helpTip.style.left = (html
                         ? Math.max(8, Math.min(r.left, window.innerWidth - w - 8))
                         : Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8))) + 'px';
-                    // open downward by default; flip above when there's more room up,
-                    // and clamp max-height so a long list scrolls instead of spilling
-                    // off the bottom of the viewport (bottom-most GPU, long owner list).
+                    // Strongly prefer opening DOWNWARD so the panel never covers the
+                    // card you're reading. Only flip up when there's too little room
+                    // below to be usable (near the viewport bottom); the max-height
+                    // clamp then lets a long list scroll instead of spilling off-screen.
                     const spaceBelow = window.innerHeight - r.bottom - 16;
                     const spaceAbove = r.top - 16;
-                    if(spaceBelow >= spaceAbove) {
+                    if(spaceBelow >= 180 || spaceBelow >= spaceAbove) {
                         helpTip.style.top = (r.bottom + 9) + 'px';
                         helpTip.style.bottom = 'auto';
                         helpTip.style.maxHeight = Math.max(80, spaceBelow) + 'px';
@@ -274,6 +278,23 @@
                 _helpHideT = setTimeout(() => { helpTip.classList.remove('show'); _helpHideT = null; }, 140);
             }
         });
+        // Click a help "?" or the Owners trigger to PIN the panel open — so a long
+        // owner list can be read (and scrolled) without holding the hover. Click the
+        // trigger again, or anywhere outside, to release it.
+        document.addEventListener('click', e => {
+            const badge = e.target.closest('.help, .gpu-owners');
+            if(!badge) return;
+            if(_helpPinned) { _unpinHelp(); return; }
+            if(helpTip.classList.contains('show')) { _helpPinned = true; helpTip.classList.add('pinned'); }
+        });
+        document.addEventListener('mousedown', e => {
+            if(_helpPinned && !helpTip.contains(e.target) && !e.target.closest('.help, .gpu-owners')) _unpinHelp();
+        });
+        // Safety: never leave the GPU board frozen if the pointer leaves the window or
+        // the tab loses focus while resting on a block (mousemove wouldn't fire again).
+        document.addEventListener('mouseleave', () => { window._overVramBlock = false; });
+        window.addEventListener('blur', () => { window._overVramBlock = false; });
+        document.addEventListener('visibilitychange', () => { if(document.hidden) window._overVramBlock = false; });
 
         // ── GPU per-process note editor (shared popover) ──
         // Notes are keyed host:gpu:pid and stored centrally. window._gpuNotes holds

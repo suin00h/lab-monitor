@@ -141,50 +141,54 @@
             const c = document.getElementById(targetId);
             window._gpuNotes = notes;  // let the shared note editor prefill current text
             gpuBuildColors(gpus);  // unified per-user colours (accent + stable queue)
-            c.innerHTML = gpuVitals(mem, cpu) + gpus.map((gpu, idx) => `
+            c.innerHTML = gpuVitals(mem, cpu) + gpus.map((gpu, idx) => {
+                // Free VRAM is the operator's "can I run?" number — printed as a quiet grey
+                // watermark in the bar's empty space (same voice as an idle GPU), so the
+                // headroom reads right where the free room is, not as a loud hero figure.
+                const free = gpu.total_mem - gpu.used_mem;
+                // temp is the one coloured readout — a temperature scale: cool / warm / hot
+                const tempColor = gpu.temp >= 80 ? 'var(--color-crit)' : gpu.temp >= 68 ? 'var(--color-warn)' : 'var(--available)';
+                // bar fractions are per-process; only scale down if the sum would overflow
+                const totalPct = gpu.total_mem ? gpu.processes.reduce((s, p) => s + (p.usage / gpu.total_mem) * 100, 0) : 0;
+                const scale = totalPct > 100 ? 100 / totalPct : 1;
+                const freePct = Math.max(0, 100 - totalPct * scale);
+                const showWm = freePct >= 22;  // enough empty room to print the free amount inline (else it falls to the footer)
+                return `
                 <div class="mb-12">
-                    <div class="flex justify-between items-center mb-4 px-1">
-                        <span class="text-2xl font-black tracking-tight">#0${gpu.id} ${gpu.name}</span>
-                        <div class="flex items-center gap-6 mono font-black" style="font-variant-numeric:tabular-nums">
-                            <span class="text-orange-500 text-lg">TEMP <span style="display:inline-block;min-width:5ch;text-align:left">${gpu.temp}°C</span></span>
-                            <div class="flex items-center gap-3">
-                                <span style="color:var(--accent)" class="text-lg">UTIL <span style="display:inline-block;min-width:4ch;text-align:left">${gpu.gpu_util}%</span></span>
-                                <div style="width:120px;height:8px;background:var(--bar-bg);border-radius:999px;overflow:hidden;border:1px solid var(--bar-border)">
-                                    <div style="width:${gpu.gpu_util}%;height:100%;background:var(--accent);border-radius:999px;transition:width 0.5s ease;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="gpu-bar-container">
-                        ${(() => {
-                            const procs = gpu.processes;
-                            // raw fraction of total VRAM per process; leaves empty space when the
-                            // GPU isn't full. Only scale down if the total would exceed 100%
-                            // (can't happen on real hardware, but keeps the bar from overflowing).
-                            const totalPct = procs.reduce((s, p) => s + (p.usage / gpu.total_mem) * 100, 0);
-                            const scale = totalPct > 100 ? 100 / totalPct : 1;
-                            const showText = pct => pct > 6;
-                            const blocks = procs.map(p => {
-                                const pct = (p.usage / gpu.total_mem) * 100 * scale;
-                                const nc = (notes[gpuNoteKey(gpu.id, p.pid)] || []).length;
-                                const small = showText(pct) ? '0' : '1';  // data for the hover feed tooltip
-                                const uesc = String(p.user).replace(/'/g, "\\'");
-                                return `<div class="vram-block${nc ? ' has-note' : ''}" data-note-trigger data-gpu="${gpu.id}" data-pid="${p.pid}" data-user="${escapeHTML(p.user)}" data-usage="${gpuMem(p.usage, false)}" data-small="${small}" style="width:calc(${pct}% - 2px);--ub:${gpuUserTint(gpuUserRank(p.user))}" onclick="gpuNoteEdit(${gpu.id}, ${p.pid}, '${uesc}')">
-                                    ${showText(pct) ? `<span class="font-black tracking-tight text-base truncate w-full leading-none text-center px-1" style="color:var(--text)">${p.user}</span><span class="mono text-sm font-bold mt-1" style="color:var(--label)">${gpuMem(p.usage, true)}</span>` : ''}
-                                    ${nc ? '<span class="vb-note-dot"></span>' : ''}
-                                </div>`;
-                            });
-                            return blocks.join('');
-                        })()}
-                        ${gpu.processes.length === 0 ? '<div class="absolute inset-0 flex items-center justify-center font-bold uppercase tracking-[0.5em] text-sm" style="color:var(--label)">GPU IDLE</div>' : ''}
-                    </div>
-                    <div class="flex justify-between items-center px-1 mono text-sm font-bold tracking-wider uppercase" style="color:var(--label);font-variant-numeric:tabular-nums">
-                        <span>${gpuOwnersTrigger(gpu)}</span>
-                        <span class="flex items-center flex-wrap justify-end gap-x-5 gap-y-1">
-                            <span style="color:var(--available)">Free <strong class="text-base font-black" style="display:inline-block;min-width:6ch;text-align:right">${(gpu.total_mem - gpu.used_mem).toLocaleString()}</strong> MiB</span>
-                            <span><strong class="text-base font-black" style="color:var(--strong);display:inline-block;min-width:6ch;text-align:right">${gpu.used_mem.toLocaleString()}</strong> / <strong class="text-base font-black" style="color:var(--strong)">${gpu.total_mem.toLocaleString()}</strong> MiB</span>
+                    <div class="flex justify-between items-center mb-4 px-1 gap-4">
+                        <span class="text-xl font-black tracking-tight">#0${gpu.id} ${gpu.name}</span>
+                        <span class="gpu-ut">
+                            <span class="gpu-ut-g">
+                                <span class="gpu-ut-l">Util</span>
+                                <span class="gpu-ut-v">${gpu.gpu_util}%</span>
+                                <span class="gpu-ut-bar"><div style="width:${gpu.gpu_util}%"></div></span>
+                            </span>
+                            <span class="gpu-ut-g">
+                                <span class="gpu-ut-l">Temp</span>
+                                <span class="gpu-ut-v" style="color:${tempColor}">${gpu.temp}°</span>
+                                <span class="gpu-ut-bar"><div style="width:${Math.min(100, gpu.temp)}%;background:${tempColor}"></div></span>
+                            </span>
                         </span>
                     </div>
+                    <div class="gpu-bar-container">
+                        ${gpu.processes.map(p => {
+                            const pct = (p.usage / gpu.total_mem) * 100 * scale;
+                            const nc = (notes[gpuNoteKey(gpu.id, p.pid)] || []).length;
+                            const showText = pct > 6;
+                            const small = showText ? '0' : '1';  // data for the hover feed tooltip
+                            const uesc = String(p.user).replace(/'/g, "\\'");
+                            return `<div class="vram-block${nc ? ' has-note' : ''}" data-note-trigger data-gpu="${gpu.id}" data-pid="${p.pid}" data-user="${escapeHTML(p.user)}" data-usage="${gpuMem(p.usage, false)}" data-small="${small}" style="width:calc(${pct}% - 2px);--ub:${gpuUserTint(gpuUserRank(p.user))}" onclick="gpuNoteEdit(${gpu.id}, ${p.pid}, '${uesc}')">
+                                ${showText ? `<span class="font-black tracking-tight text-base truncate w-full leading-none text-center px-1" style="color:var(--text)">${p.user}</span><span class="mono text-sm font-bold mt-1" style="color:var(--label)">${gpuMem(p.usage, true)}</span>` : ''}
+                                ${nc ? '<span class="vb-note-dot"></span>' : ''}
+                            </div>`;
+                        }).join('')}
+                        ${showWm ? `<div class="gpu-free-wm" style="width:calc(${freePct}% - 2px)">${free.toLocaleString()} MiB<span class="w">free</span></div>` : ''}
+                    </div>
+                    <div class="gpu-foot">
+                        <span>${gpuOwnersTrigger(gpu)}</span>
+                        <span class="gpu-foot-num">${gpu.used_mem.toLocaleString()} / ${gpu.total_mem.toLocaleString()} MiB${showWm ? '' : ` · ${free.toLocaleString()} free`}</span>
+                    </div>
                     ${idx !== gpus.length - 1 ? '<div class="device-separator"></div>' : ''}
-                </div>`).join('');
+                </div>`;
+            }).join('');
         }
