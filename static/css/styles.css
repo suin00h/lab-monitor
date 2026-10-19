@@ -166,8 +166,10 @@
         .own-row .ob > div { height: 100%; background: var(--accent); border-radius: 999px; }
         .own-row .v { font-family: var(--mono-font, 'DM Mono'), 'Pretendard', 'Noto Sans KR', monospace; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; flex-shrink: 0; min-width: 9ch; text-align: right; }
         .gpu-bar-container { position: relative; height: 96px; display: flex; align-items: center; gap: 2px; padding: 0 8px; background-color: var(--card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 16px; overflow: hidden; box-sizing: border-box; }
-        .vram-block { box-sizing: border-box; position: relative; min-width: 4px; flex-shrink: 0; border: 1.5px solid var(--ub, var(--accent)); background: color-mix(in srgb, var(--ub, var(--accent)) 15%, transparent); border-radius: 6px; height: calc(100% - 16px); cursor: pointer; transition: transform 0.2s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.2s, background-color 0.2s; z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }
-        .vram-block:hover { transform: scaleY(1.12) scaleX(1.02); z-index: 100; background: color-mix(in srgb, var(--ub, var(--accent)) 35%, transparent); box-shadow: 0 12px 30px rgba(0,0,0,0.7), 0 0 20px var(--ub, var(--accent)); }
+        .vram-block { box-sizing: border-box; position: relative; min-width: 4px; flex-shrink: 0; border: 1.5px solid var(--ub, var(--accent)); background: color-mix(in srgb, var(--ub, var(--accent)) 15%, transparent); border-radius: 6px; height: calc(100% - 16px); cursor: pointer; transition: background-color 0.15s; z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }
+        /* hover: only brighten the fill — no scale (distorts the card) and no glow
+           (clipped by the card, looked like a layer beneath it) */
+        .vram-block:hover { background: color-mix(in srgb, var(--ub, var(--accent)) 35%, transparent); }
         /* single shared tooltip lives on <body> so it is never clipped by the container */
         .vram-tooltip {
             position: fixed; left: 0; top: 0;

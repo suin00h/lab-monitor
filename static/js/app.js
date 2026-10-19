@@ -143,6 +143,9 @@
                     // per-process notes are stored centrally on the aggregator (not per-host)
                     try { const nr = await fetch('/api/gpu_notes'); if(nr.ok) notes = await nr.json(); } catch(e) {}
                     if(currentHost !== reqHost) return;
+                    // don't rebuild the cards while the pointer is on a block — it
+                    // would destroy the hovered node and flicker. Resumes on mouse-out.
+                    if(window._overVramBlock) return;
                     renderGpu(data, 'content', mem, cpu, notes);
                 }
                 else {
@@ -203,6 +206,9 @@
         document.body.appendChild(noteTip);
         document.addEventListener('mousemove', e => {
             const block = e.target.closest('.vram-block');
+            // pause the 3s GPU re-render while the pointer rests on a block, so the
+            // hovered node isn't torn down and rebuilt under the cursor (flicker).
+            window._overVramBlock = !!block;
             if(!block || !block.dataset.pid) { noteTip.classList.remove('show'); return; }
             const key = currentHost + ':' + block.dataset.gpu + ':' + block.dataset.pid;
             const comments = (window._gpuNotes && window._gpuNotes[key]) || [];
