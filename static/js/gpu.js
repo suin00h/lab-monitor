@@ -129,12 +129,39 @@
         // Thin vitals strip between the tab bar and the first GPU card: system
         // memory use + CPU pressure, at a glance, without leaving the GPU tab.
         function gpuVitals(mem, cpu) {
-            const bar = (label, pct, val) => `<div class="gv"><span class="gv-l">${label}</span><div class="gv-track"><div class="gv-fill" style="width:${Math.min(100, pct).toFixed(1)}%"></div></div><span class="gv-v">${val}</span></div>`;
+            const bar = (label, pct, val) => `<div class="gv"><span class="gv-l">${label}</span><div class="gv-track"><div class="gv-fill" data-bk="gv-${label}" style="width:${Math.min(100, pct).toFixed(1)}%"></div></div><span class="gv-v">${val}</span></div>`;
             const items = [];
             if(mem && mem.total) items.push(bar('MEM', mem.used / mem.total * 100, `${(mem.used / mem.total * 100).toFixed(0)}%`));
             if(cpu && cpu.pressure) items.push(bar('PRESSURE', cpu.pressure.avg10, `${cpu.pressure.avg10.toFixed(0)}%`));
             if(!items.length) return '';
             return `<div class="gpu-vitals">${items.join('<div class="gv-sep"></div>')}</div>`;
+        }
+
+        // Bar-width animation. The card is rebuilt via innerHTML each tick, so fresh bar
+        // elements render at their final width with no "from" state. We cache each bar's
+        // previous width (keyed by data-bk) and, right after the rebuild, seed the new
+        // element with the old width (transition off), force a reflow, then set the target
+        // width so the CSS width-transition animates. Removed bars are pruned.
+        const _barCache = {};
+        function _flipBars(root) {
+            const seen = new Set();
+            const plan = [];  // [el, targetWidth] for bars that moved
+            root.querySelectorAll('[data-bk]').forEach(el => {
+                const bk = el.dataset.bk; seen.add(bk);
+                const target = el.style.width;
+                const prev = _barCache[bk];
+                _barCache[bk] = target;
+                if(prev && prev !== target) {
+                    el.style.transition = 'none';   // seed the old width without animating
+                    el.style.width = prev;
+                    plan.push([el, target]);
+                }
+            });
+            if(plan.length) {
+                void root.offsetWidth;              // ONE forced reflow for all seeded widths
+                plan.forEach(([el, target]) => { el.style.transition = ''; el.style.width = target; });
+            }
+            for(const k in _barCache) if(!seen.has(k)) delete _barCache[k];
         }
 
         function renderGpu(gpus, targetId = 'content', mem = null, cpu = null, notes = {}) {
@@ -147,7 +174,7 @@
                 // headroom reads right where the free room is, not as a loud hero figure.
                 const free = gpu.total_mem - gpu.used_mem;
                 // temp is the one coloured readout — a temperature scale: cool / warm / hot
-                const tempColor = gpu.temp >= 80 ? 'var(--color-crit)' : gpu.temp >= 68 ? 'var(--color-warn)' : 'var(--available)';
+                const tempColor = gpu.temp >= 85 ? 'var(--color-crit)' : gpu.temp >= 68 ? 'var(--color-warn)' : 'var(--available)';
                 // bar fractions are per-process; only scale down if the sum would overflow
                 const totalPct = gpu.total_mem ? gpu.processes.reduce((s, p) => s + (p.usage / gpu.total_mem) * 100, 0) : 0;
                 const scale = totalPct > 100 ? 100 / totalPct : 1;
@@ -161,12 +188,12 @@
                             <span class="gpu-ut-g">
                                 <span class="gpu-ut-l">Util</span>
                                 <span class="gpu-ut-v">${gpu.gpu_util}%</span>
-                                <span class="gpu-ut-bar"><div style="width:${gpu.gpu_util}%"></div></span>
+                                <span class="gpu-ut-bar"><div data-bk="u${gpu.id}" style="width:${gpu.gpu_util}%"></div></span>
                             </span>
                             <span class="gpu-ut-g">
                                 <span class="gpu-ut-l">Temp</span>
                                 <span class="gpu-ut-v" style="color:${tempColor}">${gpu.temp}°</span>
-                                <span class="gpu-ut-bar"><div style="width:${Math.min(100, gpu.temp)}%;background:${tempColor}"></div></span>
+                                <span class="gpu-ut-bar"><div data-bk="t${gpu.id}" style="width:${Math.min(100, gpu.temp)}%;background:${tempColor}"></div></span>
                             </span>
                         </span>
                     </div>
@@ -177,7 +204,7 @@
                             const showText = pct > 6;
                             const small = showText ? '0' : '1';  // data for the hover feed tooltip
                             const uesc = String(p.user).replace(/'/g, "\\'");
-                            return `<div class="vram-block${nc ? ' has-note' : ''}" data-note-trigger data-gpu="${gpu.id}" data-pid="${p.pid}" data-user="${escapeHTML(p.user)}" data-usage="${gpuMem(p.usage, false)}" data-small="${small}" style="width:calc(${pct}% - 2px);--ub:${gpuUserTint(gpuUserRank(p.user))}" onclick="gpuNoteEdit(${gpu.id}, ${p.pid}, '${uesc}')">
+                            return `<div class="vram-block${nc ? ' has-note' : ''}" data-bk="b${gpu.id}:${p.pid}" data-note-trigger data-gpu="${gpu.id}" data-pid="${p.pid}" data-user="${escapeHTML(p.user)}" data-usage="${gpuMem(p.usage, false)}" data-small="${small}" style="width:calc(${pct}% - 2px);--ub:${gpuUserTint(gpuUserRank(p.user))}" onclick="gpuNoteEdit(${gpu.id}, ${p.pid}, '${uesc}')">
                                 ${showText ? `<span class="font-black tracking-tight text-base truncate w-full leading-none text-center px-1" style="color:var(--text)">${p.user}</span><span class="mono text-sm font-bold mt-1" style="color:var(--label)">${gpuMem(p.usage, true)}</span>` : ''}
                                 ${nc ? '<span class="vb-note-dot"></span>' : ''}
                             </div>`;
@@ -186,9 +213,10 @@
                     </div>
                     <div class="gpu-foot">
                         <span>${gpuOwnersTrigger(gpu)}</span>
-                        <span class="gpu-foot-num">${gpu.used_mem.toLocaleString()} / ${gpu.total_mem.toLocaleString()} MiB${showWm ? '' : ` · ${free.toLocaleString()} free`}</span>
+                        <span class="gpu-foot-num">${showWm ? '' : `<span class="gf-free">${free.toLocaleString()} MiB free</span>`}<span class="gf-ut">${gpu.used_mem.toLocaleString()} / ${gpu.total_mem.toLocaleString()} MiB</span></span>
                     </div>
                     ${idx !== gpus.length - 1 ? '<div class="device-separator"></div>' : ''}
                 </div>`;
             }).join('');
+            _flipBars(c);  // animate bar widths from their previous values (smooth updates)
         }

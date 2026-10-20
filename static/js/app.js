@@ -138,10 +138,14 @@
                 if(currentTab === 'gpu') {
                     // thin vitals strip above the cards: memory use + CPU pressure (best-effort)
                     let mem = null, cpu = null, notes = {};
-                    try { const mr = await fetch(withHost('/api/memory', reqHost)); if(mr.ok) mem = await mr.json(); } catch(e) {}
-                    try { const cr = await fetch(withHost('/api/cpu', reqHost)); if(cr.ok) cpu = await cr.json(); } catch(e) {}
-                    // per-process notes are stored centrally on the aggregator (not per-host)
-                    try { const nr = await fetch('/api/gpu_notes'); if(nr.ok) notes = await nr.json(); } catch(e) {}
+                    const [mr, cr, nr] = await Promise.all([
+                        fetch(withHost('/api/memory', reqHost)).catch(() => null),
+                        fetch(withHost('/api/cpu', reqHost)).catch(() => null),
+                        fetch('/api/gpu_notes').catch(() => null),   // central notes, not per-host
+                    ]);
+                    try { if(mr && mr.ok) mem = await mr.json(); } catch(e) {}
+                    try { if(cr && cr.ok) cpu = await cr.json(); } catch(e) {}
+                    try { if(nr && nr.ok) notes = await nr.json(); } catch(e) {}
                     if(currentHost !== reqHost) return;
                     // don't rebuild the cards while the pointer is on a block — it
                     // would destroy the hovered node and flicker. Resumes on mouse-out.
@@ -294,7 +298,10 @@
         // the tab loses focus while resting on a block (mousemove wouldn't fire again).
         document.addEventListener('mouseleave', () => { window._overVramBlock = false; });
         window.addEventListener('blur', () => { window._overVramBlock = false; });
-        document.addEventListener('visibilitychange', () => { if(document.hidden) window._overVramBlock = false; });
+        document.addEventListener('visibilitychange', () => {
+            if(document.hidden) { window._overVramBlock = false; }
+            else { updateClock(); if(currentTab==='gpu'||currentTab==='mem') update(); }  // refresh immediately on return
+        });
 
         // ── GPU per-process note editor (shared popover) ──
         // Notes are keyed host:gpu:pid and stored centrally. window._gpuNotes holds
@@ -354,6 +361,7 @@
 
         let _hostTick = 0;
         setInterval(()=>{
+            if(document.hidden) return;  // a backgrounded tab shouldn't poll/re-render for nobody
             if(currentTab==='gpu'||currentTab==='mem') update();
             else if(currentTab==='disk' && diskDrillPath === null) {
                 // only auto-refresh the overview; don't disturb a drill-down view
@@ -363,7 +371,11 @@
             }
             else if(currentTab==='docker') renderDocker();
             if(++_hostTick % 2 === 0) loadHosts();  // refresh host freshness every ~6s
-            updateClock();
         }, 3000);
+        // the clock ticks every second on its own, re-aligned to each real second boundary
+        (function tickClock(){
+            if(!document.hidden) updateClock();
+            setTimeout(tickClock, 1000 - (Date.now() % 1000) + 5);
+        })();
         loadHosts();
         update();

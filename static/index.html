@@ -4,9 +4,15 @@
     <meta charset="UTF-8">
     <title>Lab Monitor</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Montserrat + DM Mono are self-hosted (see styles.css @font-face); Korean uses
-         the self-hosted Pretendard. No external font dependency. -->
+    <!-- Preload the above-the-fold self-hosted fonts so text doesn't swap in late -->
+    <link rel="preload" href="/static/fonts/Pretendard-Medium.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/static/fonts/Pretendard-Bold.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/static/fonts/DMMono-Medium.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/static/fonts/Montserrat-Medium.woff2" as="font" type="font/woff2" crossorigin>
+    <!-- Precompiled Tailwind utilities (static) — replaces the runtime cdn.tailwindcss.com
+         compiler (FOUC + recompile on every re-render). Rebuild: see tailwind.config.js.
+         Montserrat + DM Mono self-hosted (styles.css @font-face); Korean uses Pretendard. -->
+    <link rel="stylesheet" href="/static/css/tw.css">
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body class="p-8 lg:p-20">
@@ -27,7 +33,7 @@
                 <span class="ctl-divider"></span>
                 <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light / dark"></button>
                 <span class="ctl-divider"></span>
-                <div class="text-sm mono font-bold w-[96px] text-right tracking-tight select-none" style="color:var(--strong)" id="time">00:00:00 AM</div>
+                <div class="text-sm font-bold tracking-tight select-none" style="color:var(--strong);font-variant-numeric:tabular-nums" id="time">00:00:00 AM</div>
             </div>
         </div>
         <!-- tabs + host selector share one row: tabs left, host chips right (no dedicated row) -->

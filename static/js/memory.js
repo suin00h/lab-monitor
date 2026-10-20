@@ -31,7 +31,7 @@
             const start = (1 - mem.available / T) * 100;
             const availArc = `conic-gradient(var(--seg-free) 0 ${start}%, var(--available) ${start}% 100%)`;
             return `<div class="mcol">
-                <div class="mhead"><span class="t">Memory</span><span class="s">${mem.used.toFixed(0)} / ${mem.total.toFixed(0)} GiB used <span class="help" data-help="mem">?</span></span></div>
+                <div class="mhead"><span class="t">Memory</span><span class="s">${mem.used.toFixed(0)} / ${mem.total.toFixed(0)} GiB used<span class="help" data-help="mem">?</span></span></div>
                 <div class="mbox">
                     <div class="mring" style="background:conic-gradient(${compConic})">
                         <div class="mring-inner" style="background:${availArc}">
@@ -82,7 +82,7 @@
                 ${thRow('var(--z3)', 'Saturated', `≥ ${CPU_SAT}%`)}
             </div>`;
             return `<div class="mcol">
-                <div class="mhead"><span class="t">CPU</span><span class="s">iowait ${io.toFixed(0)}% <span class="help" data-help="cpu">?</span></span></div>
+                <div class="mhead"><span class="t">CPU</span><span class="s">iowait ${io.toFixed(0)}%<span class="help" data-help="cpu">?</span></span></div>
                 <div class="mbox">
                     <div class="mring" style="background:${pressureArc}">
                         <div class="mring-inner" style="background:${zoneRing}">
@@ -134,7 +134,7 @@
                             </div>
                             <div class="details-enter px-6" style="background:var(--proc-detail-bg)">
                                 <div class="pb-6 pt-2 space-y-3" style="border-top:1px solid var(--separator)">
-                                    ${g.procs.map(p => `
+                                    ${ex ? g.procs.map(p => `
                                         <div class="flex justify-between items-start gap-4 py-2 px-4 rounded-lg proc-hover">
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex items-center gap-3 mb-1">
@@ -146,7 +146,7 @@
                                                 <span class="text-xs" style="color:var(--sub)">RSS: ${memProcVal(p.rss)}</span>
                                                 <span class="font-bold" style="color:var(--accent)">PSS: ${memProcVal(p.pss)}</span>
                                             </div>
-                                        </div>`).join('')}
+                                        </div>`).join('') : ''}
                                 </div>
                             </div>
                         </div>`;

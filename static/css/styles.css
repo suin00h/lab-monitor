@@ -23,9 +23,14 @@
             --modal-bg: #1a1a1f;
             --os-overhead: rgba(59,130,246,0.5);
             --available-overlay: rgba(16,185,129,0.18);
-            --mono-font: 'IBM Plex Mono','DM Mono',monospace;
-            --body-font: 'Manrope','Noto Sans KR',sans-serif;
-            --code-font: 'JetBrains Mono','DM Mono',monospace;
+            /* default to self-hosted faces (Pretendard / DM Mono) — the old Manrope /
+               IBM Plex / JetBrains defaults came from a Google Fonts <link> that was
+               removed when fonts were self-hosted, so they fell back to system fonts.
+               Pretendard + DM Mono now match the timetable (sister site). The Font Lab
+               can still switch any of these per-browser and loads its choice on demand. */
+            --mono-font: 'DM Mono','Pretendard',monospace;
+            --body-font: 'Pretendard','Noto Sans KR',sans-serif;
+            --code-font: 'DM Mono','Pretendard',monospace;
             /* Docs prose — GitHub/Notion-style native system stack. Latin falls
                through to the OS UI face; Korean skips those (no glyphs) and lands
                on the OS Korean face (Apple SD Gothic Neo / Malgun Gothic / Noto). */
@@ -36,24 +41,28 @@
             --cache: #f59e0b;
         }
         .light {
-            /* accent is slightly deeper than dark's #5b6af0 so small accent text
-               (UTIL/Free/running/counts) clears contrast on a white card. */
-            --bg: #f0f2f5; --card: #ffffff; --text: #0f172a; --accent: #4f46e5;
-            --border: rgba(0,0,0,0.12); --sub: rgba(15,23,42,0.72);
-            --label: rgba(15,23,42,0.75); --strong: #0f172a;
-            --divider: rgba(15,23,42,0.22);
-            --seg-overhead: rgba(15,23,42,0.5); --seg-cache: rgba(15,23,42,0.26); --seg-free: rgba(15,23,42,0.07);
-            --z1: rgba(15,23,42,0.10); --z2: rgba(15,23,42,0.22); --z3: rgba(15,23,42,0.38);
-            --bar-bg: rgba(0,0,0,0.08); --bar-border: rgba(0,0,0,0.08);
-            --proc-hover: rgba(0,0,0,0.05); --proc-detail-bg: rgba(0,0,0,0.02);
-            --pid-bg: rgba(0,0,0,0.09); --separator: rgba(0,0,0,0.10);
+            /* Reference-grounded (GitHub Primer / Tailwind / Notion): NEUTRAL greys
+               (not cool slate) and a soft near-black text instead of pure slate-900.
+               Fully flat + white: page and cards are both white, so nothing looks
+               dull or pops — cards are delineated by their hairline borders alone.
+               Accent stays a touch deeper than dark's #5b6af0 so small accent text
+               clears contrast. */
+            --bg: #ffffff; --card: #ffffff; --text: #1f2328; --accent: #4f46e5;
+            --border: rgba(31,35,40,0.12); --sub: rgba(31,35,40,0.60);
+            --label: rgba(31,35,40,0.72); --strong: #0d1117;
+            --divider: rgba(31,35,40,0.15);
+            --seg-overhead: rgba(31,35,40,0.46); --seg-cache: rgba(31,35,40,0.22); --seg-free: rgba(31,35,40,0.06);
+            --z1: rgba(31,35,40,0.08); --z2: rgba(31,35,40,0.18); --z3: rgba(31,35,40,0.32);
+            --bar-bg: rgba(31,35,40,0.06); --bar-border: rgba(31,35,40,0.09);
+            --proc-hover: rgba(31,35,40,0.04); --proc-detail-bg: rgba(31,35,40,0.02);
+            --pid-bg: rgba(31,35,40,0.07); --separator: rgba(31,35,40,0.09);
             --modal-bg: #ffffff;
-            --os-overhead: rgba(59,130,246,0.35);
-            --available-overlay: rgba(16,185,129,0.15);
-            --color-crit: #e11d48;
-            --color-warn: #d97706;
-            --available: #059669;
-            --cache: #d97706;
+            --os-overhead: rgba(59,130,246,0.32);
+            --available-overlay: rgba(4,120,87,0.13);
+            --color-crit: #d1242f;
+            --color-warn: #b45309;
+            --available: #047857;
+            --cache: #b45309;
         }
         body { background-color: var(--bg); color: var(--text); font-family: var(--body-font, 'Pretendard','Noto Sans KR',sans-serif); transition: background 0.3s; scrollbar-gutter: stable; }
         html { scrollbar-gutter: stable; }
@@ -78,7 +87,10 @@
         .mcol { display: flex; flex-direction: column; }
         .mhead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 0 4px; margin-bottom: 16px; }
         .mhead .t { font-weight: 900; font-size: 24px; letter-spacing: -0.025em; line-height: 2rem; }
-        .mhead .s { font-family: var(--mono-font, 'DM Mono'), 'Pretendard', 'Noto Sans KR', monospace; font-weight: 700; font-size: 15px; color: var(--text); }
+        /* inline-flex so the ? badge is vertically centred with the text and keeps a
+           fixed gap (not a font-dependent space char); the text stays the first item so
+           the subtitle still baseline-aligns with the title. */
+        .mhead .s { display: inline-flex; align-items: center; gap: 6px; font-family: 'Pretendard', 'Noto Sans KR', 'Segoe UI', system-ui, sans-serif; font-weight: 700; font-size: 15px; color: var(--text); font-variant-numeric: tabular-nums; }
         .mbox { border: 1px solid var(--border); border-radius: 16px; background: var(--card); padding: 26px; flex: 1; display: flex; gap: 28px; align-items: center; }
         .mring { width: 168px; height: 168px; border-radius: 50%; flex-shrink: 0; position: relative; }
         .mring::after { content: ''; position: absolute; inset: 21px; background: var(--card); border-radius: 50%; }
@@ -169,7 +181,7 @@
         .own-row .ob > div { height: 100%; background: var(--accent); border-radius: 999px; }
         .own-row .v { font-family: var(--mono-font, 'DM Mono'), 'Pretendard', 'Noto Sans KR', monospace; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; flex-shrink: 0; min-width: 9ch; text-align: right; }
         .gpu-bar-container { position: relative; height: 96px; display: flex; align-items: center; gap: 2px; padding: 0 8px; background-color: var(--card); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 16px; overflow: hidden; box-sizing: border-box; }
-        .vram-block { box-sizing: border-box; position: relative; min-width: 4px; flex-shrink: 0; border: 1.5px solid var(--ub, var(--accent)); background: color-mix(in srgb, var(--ub, var(--accent)) 15%, transparent); border-radius: 6px; height: calc(100% - 16px); cursor: pointer; transition: background-color 0.15s; z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }
+        .vram-block { box-sizing: border-box; position: relative; min-width: 4px; flex-shrink: 0; border: 1.5px solid var(--ub, var(--accent)); background: color-mix(in srgb, var(--ub, var(--accent)) 15%, transparent); border-radius: 6px; height: calc(100% - 16px); cursor: pointer; transition: background-color 0.15s, width 0.4s cubic-bezier(0.2,0.8,0.2,1); z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow: hidden; }
         /* hover: only brighten the fill — no scale (distorts the card) and no glow
            (clipped by the card, looked like a layer beneath it) */
         .vram-block:hover { background: color-mix(in srgb, var(--ub, var(--accent)) 35%, transparent); }
@@ -184,7 +196,10 @@
         .gpu-ut .gpu-ut-l { color: var(--text); }
         /* fixed-width, right-aligned value: labels don't shift as the number width
            changes, and the value hugs its bar with the same gap in both groups */
-        .gpu-ut .gpu-ut-v { display: inline-block; min-width: 4ch; text-align: right; }
+        /* FIXED width (not min-width): "100%" / "100°" are wider than 4ch because % and °
+           exceed a digit, so a min-width box grew and pushed the right-anchored row left.
+           A fixed width pins the box for any value (1–4 chars), so nothing shifts. */
+        .gpu-ut .gpu-ut-v { display: inline-block; width: 4.7ch; text-align: right; }
         .gpu-ut .gpu-ut-bar { width: 92px; height: 9px; background: var(--bar-bg); border: 1px solid var(--bar-border); border-radius: 999px; overflow: hidden; }
         .gpu-ut .gpu-ut-bar > div { height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.5s ease; }
         /* free amount printed in the bar's empty space — same quiet voice as an idle GPU */
@@ -195,7 +210,10 @@
         /* GPU card footer — owners (left) + used/total (right) */
         .gpu-foot { display: flex; justify-content: space-between; align-items: center; padding: 0 4px; }
         /* same font, size and weight as the owners trigger (Pretendard, inherited) */
-        .gpu-foot-num { font-family: 'Pretendard', 'Noto Sans KR', 'Segoe UI', system-ui, sans-serif; color: var(--text); font-variant-numeric: tabular-nums; }
+        /* used/total sits at the right edge (.gf-ut last); when free spills out of the bar
+           it appears to its LEFT with a gap (no separator dot), so used/total never shifts */
+        .gpu-foot-num { display: inline-flex; align-items: baseline; gap: 18px; font-family: 'Pretendard', 'Noto Sans KR', 'Segoe UI', system-ui, sans-serif; color: var(--text); font-variant-numeric: tabular-nums; }
+        .gpu-foot-num .gf-free { color: var(--label); }
         .device-separator { height: 1px; width: 100%; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.35; margin: 40px 0; }
         .details-enter { max-height: 0; overflow: hidden; transition: max-height 0.25s ease-out; }
         .expanded .details-enter { max-height: 480px; overflow-y: auto; }

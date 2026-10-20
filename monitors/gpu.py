@@ -9,11 +9,20 @@ from monitors import container
 
 _lock = threading.Lock()
 _cache: list = []
+_nvml_ready = False  # NVML is init'd once and the handle reused across polls (not per 3s call)
+
+
+def _ensure_nvml():
+    global _nvml_ready
+    if not _nvml_ready:
+        pynvml.nvmlInit()
+        _nvml_ready = True
 
 
 def collect():
+    global _nvml_ready
     try:
-        pynvml.nvmlInit()
+        _ensure_nvml()
         gpus = []
         unresolved = []  # (proc_entry, {pid, uuid, mem}) for PID-isolated container jobs
         for i in range(pynvml.nvmlDeviceGetCount()):
@@ -57,9 +66,10 @@ def collect():
                         entry["user"] = name
             except Exception:
                 pass
-        pynvml.nvmlShutdown()
         return gpus
-    except: return []
+    except:
+        _nvml_ready = False  # force a clean re-init on the next poll after a driver hiccup
+        return []
 
 
 def get_cache():
