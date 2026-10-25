@@ -35,17 +35,34 @@
         function authorColor(a) { return `hsl(${authorHash('c' + a) % 360} 68% 62%)`; }
         // Per-user tint for VRAM blocks / owner rows. The palette is built FROM
         // the current theme accent (read live, so it tracks dark/light), not a
-        // fixed hue: the heaviest user on a GPU gets the accent itself, and each
-        // lighter user steps a little brighter + a little less saturated. Fed into
-        // the block as --ub so the 15%/35% transparent fill design is untouched —
+        // fixed hue: one present user holds the accent itself, every other user gets
+        // a seat in the same tight accent family (see the selection logic below). Fed
+        // into the block as --ub so the 15%/35% transparent fill design is untouched —
         // only the tint colour shifts, the opacity structure stays.
         let _gpuAcc = { h: 234, s: 83, l: 65 };
-        // Colour seats, kept PER HOST so switching hosts and coming back does not
-        // disturb a host's assignment (otherwise the other host's users look like a
-        // mass "release" and reshuffle everything). Seats fill lowest-free-first
-        // (0 = accent); _gpuActiveSeat points at the current host's map.
-        let _gpuSeatByHost = {};
-        let _gpuActiveSeat = new Map();
+        // Colour "seats" (the hue/sat/light variation values) are tracked PER USER and
+        // PER HOST, and PERSISTED to localStorage — so a user keeps ONE colour (the same
+        // on every device) for as long as they have a live process, across reloads /
+        // reconnects. Users who leave entirely are released; those still present are
+        // NEVER reshuffled. A new user takes the accent if it's free, else the seat whose
+        // tint is farthest (OKLab) from everything already shown.
+        function _gpuLoadSeats() {
+            try {
+                const o = JSON.parse(localStorage.getItem('labmon.gpuSeats.v2') || '{}');
+                const m = {};
+                for(const h in o) m[h] = new Map(Object.entries(o[h]));   // keys are usernames (strings)
+                return m;
+            } catch(e) { return {}; }
+        }
+        function _gpuSaveSeats() {
+            try {
+                const o = {};
+                for(const h in _gpuSeatByHost) { o[h] = {}; for(const [k, v] of _gpuSeatByHost[h]) o[h][k] = v; }
+                localStorage.setItem('labmon.gpuSeats.v2', JSON.stringify(o));
+            } catch(e) {}
+        }
+        let _gpuSeatByHost = _gpuLoadSeats();
+        let _gpuActiveSeat = new Map();   // user -> seat, for the current host
         function gpuReadAccent() {
             const v = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
             let r, g, b;
@@ -58,54 +75,88 @@
             if(d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if(h < 0) h += 360; }
             _gpuAcc = { h, s: s * 100, l: l * 100 };
         }
-        // Rebuild seats once per render. Release users who left every GPU, give new
-        // users the lowest free seat (0 = accent, so a vacated accent goes to a
-        // newcomer). THEN, whenever a seat was freed this tick, re-randomize every
-        // NON-accent seat number — so the non-accent colours keep shuffling to fresh
-        // values instead of cycling the same low-numbered palette. seat 0 (accent)
-        // is always preserved. seat -> colour stays deterministic; only which seat a
-        // user holds changes, and only on a release.
+        // ── Diversity-aware seat selection (keeps live colours visually distinct) ──
+        // The colour POOL is unchanged (the accent-family tint below); only HOW a seat
+        // is picked changed: a new process gets the candidate seat whose tint sits
+        // farthest, in OKLab perceptual space, from every colour already on screen —
+        // so freshly-assigned colours never land close to an existing one.
+        const _GPU_CAND = 200;   // candidate seats (1.._GPU_CAND) in the family pool
+        function _srgbLin(c){ c/=255; return c<=0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); }
+        function _oklab(r, g, b){
+            const R=_srgbLin(r), G=_srgbLin(g), B=_srgbLin(b);
+            const l=0.4122214708*R+0.5363325363*G+0.0514459929*B,
+                  m=0.2119034982*R+0.6806995451*G+0.1073969566*B,
+                  s=0.0883024619*R+0.2817188376*G+0.6299787005*B;
+            const l_=Math.cbrt(l), m_=Math.cbrt(m), s_=Math.cbrt(s);
+            return [0.2104542553*l_+0.7936177850*m_-0.0040720468*s_,
+                    1.9779984951*l_-2.4285922050*m_+0.4505937099*s_,
+                    0.0259040371*l_+0.7827717662*m_-0.8086757660*s_];
+        }
+        function _hslToRgb(h, s, l){
+            s/=100; l/=100;
+            const c=(1-Math.abs(2*l-1))*s, hp=(((h%360)+360)%360)/60, x=c*(1-Math.abs(hp%2-1));
+            let r=0,g=0,b=0;
+            if(hp<1){r=c;g=x;} else if(hp<2){r=x;g=c;} else if(hp<3){g=c;b=x;}
+            else if(hp<4){g=x;b=c;} else if(hp<5){r=x;b=c;} else {r=c;b=x;}
+            const m=l-c/2; return [(r+m)*255,(g+m)*255,(b+m)*255];
+        }
+        function _seatLab(seat){ const t=_seatTint(seat); const [r,g,b]=_hslToRgb(t.h,t.s,t.l); return _oklab(r,g,b); }
+        // the candidate seat whose tint is farthest from the accent + all taken seats
+        function _farthestSeat(taken){
+            const active = [_seatLab(0)];
+            for(const s of taken) active.push(_seatLab(s));
+            let best = 1, bestD = -1;
+            for(let seat = 1; seat <= _GPU_CAND; seat++){
+                if(taken.has(seat)) continue;
+                const lab = _seatLab(seat);
+                let mn = Infinity;
+                for(const a of active){ const dx=lab[0]-a[0], dy=lab[1]-a[1], dz=lab[2]-a[2]; const d=dx*dx+dy*dy+dz*dz; if(d<mn) mn=d; }
+                if(mn > bestD){ bestD = mn; best = seat; }
+            }
+            return best;
+        }
+        // Rebuild the registry once per render. A user KEEPS their seat for as long as
+        // they have a live process (no reshuffle, ever). Users who leave every GPU are
+        // released, freeing their colour — incl. the accent — for a future newcomer.
+        // Persisted so reloads look identical.
         function gpuBuildColors(gpus) {
             gpuReadAccent();
             const host = (typeof currentHost !== 'undefined' && currentHost) ? currentHost : 'local';
             const seat = _gpuSeatByHost[host] || (_gpuSeatByHost[host] = new Map());
             _gpuActiveSeat = seat;
-            const cur = [];
-            for(const g of gpus) for(const p of g.processes) if(!cur.includes(p.user)) cur.push(p.user);
-            let released = false;
-            for(const u of [...seat.keys()]) if(!cur.includes(u)) { seat.delete(u); released = true; }
+            const cur = new Set();
+            for(const g of gpus) for(const p of g.processes) cur.add(p.user);
+            let changed = false;
+            // release users who left every GPU (NO reshuffle of the survivors)
+            for(const u of [...seat.keys()]) if(!cur.has(u)) { seat.delete(u); changed = true; }
+            // assign each new user: accent (seat 0) if free, else the farthest seat
             for(const u of cur) {
                 if(seat.has(u)) continue;
                 const taken = new Set(seat.values());
-                let s = 0; while(taken.has(s)) s++;
-                seat.set(u, s);
+                seat.set(u, taken.has(0) ? _farthestSeat(taken) : 0);
+                changed = true;
             }
-            if(released) {
-                let accentUser = null;
-                for(const [u, s] of seat) if(s === 0) accentUser = u;
-                const used = new Set([0]);
-                for(const u of seat.keys()) {
-                    if(u === accentUser) continue;
-                    let s; do { s = 1 + Math.floor(Math.random() * 9999); } while(used.has(s));
-                    used.add(s); seat.set(u, s);
-                }
-            }
+            if(changed) _gpuSaveSeats();
         }
         // seat 0 = accent; higher seats step through the accent-family variations.
-        // Same user = same seat = same colour on every GPU, stable across refreshes.
+        // Keyed by USER: one colour per user (same on every device), stable while present.
         function gpuUserRank(user) { return _gpuActiveSeat.get(user) ?? 0; }
         // idx 0 = accent as-is. Higher seats: a sinusoidal embedding of the seat —
         // each channel (H/S/L) oscillates at a different IRRATIONAL frequency
-        // (√2,√3,√5) with its own phase, so the three axes are mutually incommensurate
-        // and no two seats land close on all three at once ("feel" never collides).
+        // (√2,√3,√5) with its own phase, so the three axes are mutually incommensurate.
         // Hue amplitude stays small (±28°) so it's blue–violet, not a rainbow; S/L
-        // swing wide for contrast. Deterministic in seat → same user, same colour.
+        // swing wide for contrast. Deterministic in seat → stable colour per process.
+        function _seatTint(idx) {
+            if(idx <= 0) return { h: _gpuAcc.h, s: _gpuAcc.s, l: _gpuAcc.l };
+            return {
+                h: ((_gpuAcc.h + Math.sin(idx * 1.41421) * 12) % 360 + 360) % 360,  // ±12° — stays one hue family
+                s: 60 + Math.sin(idx * 1.73205 + 0.9) * 18,   // 42–78% — soft, never hyper-saturated
+                l: 66 + Math.sin(idx * 2.23607 + 1.9) * 10,   // 56–76% — stays light, never a dark navy
+            };
+        }
         function gpuUserTint(idx) {
-            if(idx <= 0) return `hsl(${_gpuAcc.h.toFixed(0)} ${_gpuAcc.s.toFixed(0)}% ${_gpuAcc.l.toFixed(0)}%)`;
-            const H = ((_gpuAcc.h + Math.sin(idx * 1.41421) * 28) % 360 + 360) % 360;  // ±28°
-            const S = 68 + Math.sin(idx * 1.73205 + 0.9) * 24;   // 44–92%
-            const L = 62 + Math.sin(idx * 2.23607 + 1.9) * 16;   // 46–78%
-            return `hsl(${H.toFixed(0)} ${S.toFixed(0)}% ${L.toFixed(0)}%)`;
+            const t = _seatTint(idx);
+            return `hsl(${t.h.toFixed(0)} ${t.s.toFixed(0)}% ${t.l.toFixed(0)}%)`;
         }
         // GPU owner list — a hover trigger in the header ("N owners") that opens the
         // shared body-level popover. No inline space, so it never shifts the card

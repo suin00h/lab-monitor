@@ -3,10 +3,10 @@
         @font-face { font-family: 'Pretendard'; font-weight: 500; font-display: swap; src: url('/static/fonts/Pretendard-Medium.woff2') format('woff2'); }
         @font-face { font-family: 'Pretendard'; font-weight: 600; font-display: swap; src: url('/static/fonts/Pretendard-SemiBold.woff2') format('woff2'); }
         @font-face { font-family: 'Pretendard'; font-weight: 700; font-display: swap; src: url('/static/fonts/Pretendard-Bold.woff2') format('woff2'); }
-        /* Montserrat (title) + DM Mono (metrics) — self-hosted latin subset so they
+        /* Montserrat (title) + DM Mono (code only) — self-hosted latin subset so they
            load from our origin, no Google Fonts dependency. Korean falls to the
-           self-hosted Pretendard. DM Mono has no 700 on Google either, so bold mono
-           has always synthesized from 500 — unchanged. */
+           self-hosted Pretendard. Numbers/metrics use Pretendard tabular figures now,
+           so DM Mono is code-only and no longer preloaded. */
         @font-face { font-family: 'Montserrat'; font-weight: 500; font-display: swap; src: url('/static/fonts/Montserrat-Medium.woff2') format('woff2'); }
         @font-face { font-family: 'DM Mono'; font-weight: 500; font-display: swap; src: url('/static/fonts/DMMono-Medium.woff2') format('woff2'); }
 
@@ -23,12 +23,11 @@
             --modal-bg: #1a1a1f;
             --os-overhead: rgba(59,130,246,0.5);
             --available-overlay: rgba(16,185,129,0.18);
-            /* default to self-hosted faces (Pretendard / DM Mono) — the old Manrope /
-               IBM Plex / JetBrains defaults came from a Google Fonts <link> that was
-               removed when fonts were self-hosted, so they fell back to system fonts.
-               Pretendard + DM Mono now match the timetable (sister site). The Font Lab
-               can still switch any of these per-browser and loads its choice on demand. */
-            --mono-font: 'DM Mono','Pretendard',monospace;
+            /* Numbers/metrics render in Pretendard tabular figures — one numeric face
+               across the whole dashboard. DM Mono is kept only for actual code
+               (--code-font). The Font Lab can still switch any of these per-browser
+               and loads its choice on demand. */
+            --mono-font: 'Pretendard','Noto Sans KR',sans-serif;
             --body-font: 'Pretendard','Noto Sans KR',sans-serif;
             --code-font: 'DM Mono','Pretendard',monospace;
             /* Docs prose — GitHub/Notion-style native system stack. Latin falls
@@ -66,7 +65,7 @@
         }
         body { background-color: var(--bg); color: var(--text); font-family: var(--body-font, 'Pretendard','Noto Sans KR',sans-serif); transition: background 0.3s; scrollbar-gutter: stable; }
         html { scrollbar-gutter: stable; }
-        .mono { font-family: var(--mono-font, 'DM Mono'), 'Pretendard', 'Noto Sans KR', monospace; }
+        .mono { font-family: var(--mono-font, 'Pretendard'), 'Pretendard', 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums; }
         .card { background-color: var(--card); border: 1px solid var(--border); transition: all 0.3s; }
         .tab-btn { transition: all 0.2s; border-bottom: 2px solid transparent; cursor: pointer; opacity: 0.85; font-family: inherit; }
         .tab-btn:hover { opacity: 1; }
@@ -100,12 +99,12 @@
         .mring-inner { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 122px; height: 122px; border-radius: 50%; z-index: 2; }
         .mring-inner::after { content: ''; position: absolute; inset: 7px; background: var(--card); border-radius: 50%; }
         .mring .c .k { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .11em; }
-        .mring .c .n { font-family: var(--mono-font, 'DM Mono'), 'Pretendard', 'Noto Sans KR', monospace; font-size: 2.4rem; font-weight: 900; line-height: 1; }
+        .mring .c .n { font-family: var(--mono-font, 'Pretendard'), 'Pretendard', 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums; font-size: 2.4rem; font-weight: 900; line-height: 1; }
         .mbd { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; min-width: 0; }
         .mbd .it { display: flex; align-items: center; gap: 11px; }
         .mbd .sw { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
         .mbd .nm { font-size: 15px; font-weight: 600; color: var(--text); }
-        .mbd .v { margin-left: auto; font-family: var(--mono-font, 'DM Mono'), 'Pretendard', 'Noto Sans KR', monospace; font-weight: 800; font-size: 18px; color: var(--text); }
+        .mbd .v { margin-left: auto; font-family: var(--mono-font, 'Pretendard'), 'Pretendard', 'Noto Sans KR', sans-serif; font-variant-numeric: tabular-nums; font-weight: 800; font-size: 18px; color: var(--text); }
         .mbd .v-reg { font-weight: 500; }
         .ubar { height: 7px; border-radius: 999px; background: var(--bar-bg); border: 1px solid var(--bar-border); overflow: hidden; margin-top: 6px; }
         .ubar > div { height: 100%; background: var(--accent); border-radius: 999px; }
