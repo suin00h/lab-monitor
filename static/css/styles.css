@@ -140,16 +140,16 @@
         .gpu-note-pop .gnp-x { background: none; border: none; color: var(--label); cursor: pointer; display: inline-flex; padding: 3px; border-radius: 6px; flex-shrink: 0; transition: color .15s, background .15s; }
         .gpu-note-pop .gnp-x:hover { color: var(--text); background: var(--bar-bg); }
         .gpu-note-pop .gnp-feed { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
-        .gpu-note-pop .gnp-empty { color: var(--label); font-size: 13px; padding: 6px 2px; }
+        .gpu-note-pop .gnp-empty { color: var(--label); font-size: 14px; padding: 6px 2px; }
         .gpu-note-pop .gnp-c { display: flex; gap: 10px; align-items: flex-start; }
-        .gpu-note-pop .gnp-c-ico { flex-shrink: 0; display: inline-flex; margin-top: 1px; }
+        .gpu-note-pop .gnp-c-ico { flex-shrink: 0; display: inline-flex; align-items: center; height: 21.75px; }
         .gpu-note-pop .gnp-c-body { min-width: 0; flex: 1; }
-        .gpu-note-pop .gnp-c-text { font-size: 14px; color: var(--text); line-height: 1.45; word-break: break-word; }
-        .gpu-note-pop .gnp-c-meta { font-family: var(--mono-font, 'DM Mono'), 'Pretendard', 'Noto Sans KR', monospace; font-size: 11px; color: var(--label); margin-top: 2px; }
+        .gpu-note-pop .gnp-c-text { font-size: 15px; color: var(--text); line-height: 1.45; word-break: break-word; }
+        .gpu-note-pop .gnp-c-meta { font-family: var(--mono-font, 'DM Mono'), 'Pretendard', 'Noto Sans KR', monospace; font-size: 13px; color: var(--label); margin-top: 2px; }
         .gpu-note-pop .gnp-c-del { cursor: pointer; color: var(--color-crit); }
         .gpu-note-pop .gnp-c-del:hover { text-decoration: underline; }
         .gpu-note-pop .gnp-compose { display: flex; gap: 8px; }
-        .gpu-note-pop .gnp-input { flex: 1; min-width: 0; background: var(--bar-bg); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; color: var(--text); font-family: var(--body-font, sans-serif); font-size: 14px; outline: none; }
+        .gpu-note-pop .gnp-input { flex: 1; min-width: 0; background: var(--bar-bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 13px; color: var(--text); font-family: var(--body-font, sans-serif); font-size: 15px; outline: none; }
         .gpu-note-pop .gnp-input:focus { border-color: var(--accent); }
         .gpu-note-pop .gnp-compose .modal-btn { font-size: 13px; padding: 9px 16px; flex-shrink: 0; }
         .note-tip { position: fixed; max-width: 300px; background: var(--modal-bg); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; box-shadow: 0 8px 26px rgba(0,0,0,0.45); z-index: 300; opacity: 0; visibility: hidden; transition: opacity .12s; pointer-events: none; }
@@ -171,6 +171,25 @@
         .gpu-owners:hover { color: var(--text); }
         .gpu-owners .ochev { opacity: .55; transition: opacity .15s; }
         .gpu-owners:hover .ochev { opacity: 1; }
+        /* idle GPU: non-interactive muted "0 Owners" that holds the footer slot */
+        .gpu-owners-idle { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; color: var(--label); opacity: .6; }
+        .gpu-owners-idle .ochev { opacity: .5; }
+        /* fixed-width count + word slots so the chevron aligns across cards (1 Owner / 12 Owners) */
+        .gpu-owners .go-n { font-variant-numeric: tabular-nums; }
+        /* an invisible trailing 's' on singular labels keeps their width equal to the
+           plural, so the chevron holds its place without any fixed-width slot/slack. */
+        .gpu-owners .opt-s.off, .gpu-comment .opt-s.off { visibility: hidden; }
+        /* per-GPU-card comment button — mirrors the .gpu-owners trigger so the two sit
+           as equals in the footer; hover reveals the feed via the shared popover. */
+        .gpu-foot-left { display: inline-flex; align-items: center; gap: 16px; min-width: 0; }
+        .gpu-comment { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; background: none; border: none; padding: 0; font: inherit; color: inherit; transition: color .15s; }
+        .gpu-comment:hover { color: var(--text); }
+        .gpu-comment.has { color: var(--accent); }
+        /* count + word sit in fixed-width slots so the chevron never shifts when the
+           count appears/disappears (0 → just "Notes") or the word pluralises. */
+        .gpu-comment .gcb-n { display: inline-block; min-width: 0.7em; text-align: right; font-variant-numeric: tabular-nums; }
+        .gpu-comment .gcb-ic { opacity: .55; transition: opacity .15s; }
+        .gpu-comment:hover .gcb-ic { opacity: 1; }
         .own-row { display: flex; align-items: center; gap: 12px; padding: 7px 2px; border-top: 1px solid var(--separator); }
         .own-row:first-of-type { border-top: none; padding-top: 2px; }
         .own-row .od { width: 9px; height: 9px; border-radius: 3px; background: var(--accent); flex-shrink: 0; }

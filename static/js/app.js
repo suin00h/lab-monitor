@@ -242,7 +242,7 @@
         const _unpinHelp = () => { _helpPinned = false; helpTip.classList.remove('pinned', 'show'); helpTip.dataset.key = ''; };
         document.addEventListener('mousemove', e => {
             if(_helpPinned) return;  // frozen while pinned — click-out or re-click to release
-            const badge = e.target.closest('.help, .gpu-owners');
+            const badge = e.target.closest('.help, .gpu-owners, .gpu-comment');
             const overTip = helpTip.contains(e.target);
             if(badge || overTip) {
                 clearTimeout(_helpHideT); _helpHideT = null;

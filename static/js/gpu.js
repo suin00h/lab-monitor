@@ -31,7 +31,7 @@
             '<path d="M12 2a7 7 0 00-7 7c0 3 2 4 2 6h10c0-2 2-3 2-6a7 7 0 00-7-7zM9 9a1 1 0 110 2 1 1 0 010-2zm6 0a1 1 0 110 2 1 1 0 010-2zm-6 9h6v2a1 1 0 01-1 1h-4a1 1 0 01-1-1z"/>',
         ];
         function authorHash(a) { let h = 0; a = String(a || 'anon'); for(let i = 0; i < a.length; i++) h = (h * 31 + a.charCodeAt(i)) >>> 0; return h; }
-        function authorIcon(a) { return `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">${NOTE_ICONS[authorHash(a) % NOTE_ICONS.length]}</svg>`; }
+        function authorIcon(a) { return `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">${NOTE_ICONS[authorHash(a) % NOTE_ICONS.length]}</svg>`; }
         function authorColor(a) { return `hsl(${authorHash('c' + a) % 360} 68% 62%)`; }
         // Per-user tint for VRAM blocks / owner rows. The palette is built FROM
         // the current theme accent (read live, so it tracks dark/light), not a
@@ -163,7 +163,12 @@
         // below; the full sorted list lives in the floating panel. Builds the panel
         // HTML into a data attribute (double-quotes escaped) read by the help handler.
         function gpuOwnersTrigger(gpu) {
-            if(!gpu.processes.length) return '';
+            // idle GPU (no processes): still render a muted "0 Owners" so it holds the
+            // footer's left slot and the Note button beside it doesn't shift. No popover.
+            if(!gpu.processes.length) {
+                const chev0 = '<svg class="ochev" viewBox="0 0 20 20" width="12" height="12" fill="currentColor"><path d="M5.3 7.3a1 1 0 011.4 0L10 10.6l3.3-3.3a1 1 0 011.4 1.4l-4 4a1 1 0 01-1.4 0l-4-4a1 1 0 010-1.4z"/></svg>';
+                return `<span class="gpu-owners-idle">0 Owners${chev0}</span>`;
+            }
             // Aggregate by user: one owner may run many processes, so sum their
             // VRAM and count people, not PIDs (8 procs by 1 user = "1 owner").
             const byUser = new Map();
@@ -171,10 +176,27 @@
             const owners = [...byUser.entries()].map(([user, usage]) => ({ user, usage })).sort((a, b) => b.usage - a.usage);
             const maxU = owners[0].usage || 1;
             const rows = owners.map((o) => { const col = gpuUserTint(gpuUserRank(o.user)); return `<div class="own-row"><span class="od" style="background:${col}"></span><span class="nm">${o.user}</span><span class="ob"><div style="width:${(o.usage / maxU * 100).toFixed(1)}%;background:${col}"></div></span><span class="v">${gpuMem(o.usage, false)}</span></div>`; }).join('');
-            const payload = (`<div class="tip-h">Owners</div>${rows}`).replace(/"/g, '&quot;');
-            const label = owners.length === 1 ? '1 Owner' : `${owners.length} Owners`;
+            const payload = (`${rows}`).replace(/"/g, '&quot;');
+            // count + word in fixed-width-free slots; singular keeps an invisible 's'
+            // (opt-s off) so its width equals the plural and the chevron never shifts.
+            const label = `<span class="go-n">${owners.length}</span><span class="go-w">Owner<span class="opt-s${owners.length === 1 ? ' off' : ''}">s</span></span>`;
             const chev = '<svg class="ochev" viewBox="0 0 20 20" width="12" height="12" fill="currentColor"><path d="M5.3 7.3a1 1 0 011.4 0L10 10.6l3.3-3.3a1 1 0 011.4 1.4l-4 4a1 1 0 01-1.4 0l-4-4a1 1 0 010-1.4z"/></svg>';
             return `<span class="gpu-owners" data-help="gpu-owners-${gpu.id}" data-help-html="${payload}">${label}${chev}</span>`;
+        }
+
+        // Per-GPU-card comment button (separate from per-process notes). Reuses the same
+        // note editor + /api/gpu_notes store, keyed with the reserved pid "card" so the
+        // backend needs no change. Sits next to the owners list in the card footer.
+        function gpuCommentBtn(gpu, notes) {
+            const feed = (notes || {})[gpuNoteKey(gpu.id, 'card')] || [];
+            const n = feed.length;
+            const title = `#0${gpu.id} ${gpu.name}`.replace(/['"\\]/g, '');
+            const chev = '<svg class="gcb-ic" viewBox="0 0 20 20" width="12" height="12" fill="currentColor"><path d="M5.3 7.3a1 1 0 011.4 0L10 10.6l3.3-3.3a1 1 0 011.4 1.4l-4 4a1 1 0 01-1.4 0l-4-4a1 1 0 010-1.4z"/></svg>';
+            const rows = n
+                ? feed.map(c => `<div style="display:flex;gap:9px;align-items:flex-start;padding:6px 0"><span style="color:${authorColor(c.author)};flex-shrink:0;display:inline-flex;align-items:center;height:21.75px">${authorIcon(c.author)}</span><span style="min-width:0"><span style="color:var(--text);font-size:15px;line-height:1.45;word-break:break-word">${escapeHTML(c.text)}</span><span style="display:block;font-size:12px;color:var(--label);margin-top:2px">${gpuTimeAgo(c.ts)}</span></span></div>`).join('')
+                : '<div style="color:var(--label);font-size:14px;padding:3px 0">No comments yet.</div>';
+            const payload = (`${rows}<div style="font-size:12px;color:var(--label);margin-top:7px;border-top:1px solid var(--border);padding-top:7px">Click to add / edit</div>`).replace(/"/g, '&quot;');
+            return `<button class="gpu-comment${n ? ' has' : ''}" data-note-trigger data-help="gpu-note-${gpu.id}" data-help-html="${payload}" onclick="gpuNoteEdit(${gpu.id}, 'card', '${title}')"><span class="gcb-n">${n || ''}</span><span class="gcb-w">Note<span class="opt-s${n === 1 ? ' off' : ''}">s</span></span>${chev}</button>`;
         }
 
         // Thin vitals strip between the tab bar and the first GPU card: system
@@ -263,7 +285,7 @@
                         ${showWm ? `<div class="gpu-free-wm" style="width:calc(${freePct}% - 2px)">${free.toLocaleString()} MiB<span class="w">free</span></div>` : ''}
                     </div>
                     <div class="gpu-foot">
-                        <span>${gpuOwnersTrigger(gpu)}</span>
+                        <span class="gpu-foot-left">${gpuOwnersTrigger(gpu)}${gpuCommentBtn(gpu, notes)}</span>
                         <span class="gpu-foot-num">${showWm ? '' : `<span class="gf-free">${free.toLocaleString()} MiB free</span>`}<span class="gf-ut">${gpu.used_mem.toLocaleString()} / ${gpu.total_mem.toLocaleString()} MiB</span></span>
                     </div>
                     ${idx !== gpus.length - 1 ? '<div class="device-separator"></div>' : ''}
